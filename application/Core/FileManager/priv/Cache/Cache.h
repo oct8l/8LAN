@@ -108,7 +108,7 @@ namespace FM
 
       FilePool filePool;
 
-      mutable QMutex mutex; ///< To protect all the data into the cache, files and directories.
+      mutable QRecursiveMutex mutex; ///< To protect all the data into the cache, files and directories.
    };
 }
 #endif

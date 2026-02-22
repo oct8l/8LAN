@@ -72,9 +72,9 @@ namespace FM
       bool isAChildOf(const Directory* dir) const;
 
       Directory* getSubDir(const QString& name) const;
-      QLinkedList<Directory*> getSubDirs() const;
+      QList<Directory*> getSubDirs() const;
 
-      QLinkedList<File*> getFiles() const;
+      QList<File*> getFiles() const;
       QList<File*> getCompleteFiles() const;
 
       Directory* createSubDir(const QString& name, bool physically = false);
@@ -110,7 +110,7 @@ namespace FM
 
       bool scanned;
 
-      mutable QMutex mutex;
+      mutable QRecursiveMutex mutex;
    };
 
    class DirIterator
@@ -121,7 +121,7 @@ namespace FM
       Directory* next();
 
    private:
-      QLinkedList<Directory*> dirsToVisit;
+      QList<Directory*> dirsToVisit;
    };
 }
 

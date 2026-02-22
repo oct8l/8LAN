@@ -25,7 +25,7 @@ using namespace Common;
 #include <QDirIterator>
 #include <QStringBuilder>
 #include <QtGlobal>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QHostAddress>
 #include <QNetworkInterface>
 
@@ -33,7 +33,7 @@ using namespace Common;
    #include <windows.h>
    #include <Shlobj.h>
    #include <Lmcons.h>
-#elif defined (Q_OS_LINUX)
+#elif defined(Q_OS_UNIX)
    #include <cstdio>
    #include <sys/statvfs.h>
    #include <sys/utsname.h>
@@ -280,7 +280,7 @@ qint64 Global::availableDiskSpace(const QString& path)
    if (!GetDiskFreeSpaceEx(buffer, &space, NULL, NULL))
       return std::numeric_limits<qint64>::max();
    return space.QuadPart;
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_UNIX)
    struct statvfs info;
    if (statvfs(path.toUtf8().constData(), &info) == 0)
       return static_cast<qint64>(info.f_bsize) * info.f_bavail;
@@ -402,8 +402,8 @@ QString Global::toLowerAndRemoveAccents(const QString& str)
   */
 QStringList Global::splitInWords(const QString& words)
 {
-   static const QRegExp regExp("(\\W+|_)");
-   return Global::toLowerAndRemoveAccents(words).split(regExp, QString::SkipEmptyParts);
+   static const QRegularExpression regExp("(\\W+|_)");
+   return Global::toLowerAndRemoveAccents(words).split(regExp, Qt::SkipEmptyParts);
 }
 
 /**
@@ -432,12 +432,19 @@ int Global::strcmpi(const std::string& s1, const std::string& s2)
 quint32 Global::hashStringToInt(const QString& str)
 {
    QByteArray data = str.toLocal8Bit();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+   if (data.size() <= 1)
+      return qChecksum(QByteArrayView(data));
+   const int s = data.size();
+   const quint32 part1 = qChecksum(QByteArrayView(data.constData(), s / 2));
+   const quint32 part2 = qChecksum(QByteArrayView(data.constData() + s / 2, s / 2 + (s % 2 == 0 ? 0 : 1)));
+#else
    if (data.size() <= 1)
       return qChecksum(data.constData(), data.size());
-
    const int s = data.size();
    const quint32 part1 = qChecksum(data.constData(), s / 2);
    const quint32 part2 = qChecksum(data.constData() + s / 2, s / 2 + (s % 2 == 0 ? 0 : 1));
+#endif
    return part1 | part2 << 16;
 }
 
@@ -569,14 +576,12 @@ QString Global::getCurrenUserName()
    DWORD userNameSize = sizeof(userName);
    GetUserName(userName, &userNameSize);
    return QString::fromUtf16((ushort*)userName);
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_UNIX)
    char* login = getlogin();
    if (login)
       return QString::fromUtf8(login);
    else
       return QString();
-#else
-   return "Bob";
 #endif
 }
 
@@ -587,13 +592,11 @@ QString Global::getCurrenMachineName()
    DWORD machineNameSize = sizeof(machineName);
    GetComputerName(machineName, &machineNameSize);
    return QString::fromUtf16((ushort*)machineName);
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_UNIX)
    char machineName[256];
    size_t machineNameSize = sizeof(machineName);
    gethostname(machineName, machineNameSize);
    return QString::fromUtf8(machineName);
-#else
-   return "Bob";
 #endif
 }
 

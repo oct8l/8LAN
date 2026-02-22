@@ -21,6 +21,7 @@ using namespace GUI;
 
 #include <QMessageBox>
 #include <QPushButton>
+#include <QAction>
 
 #include <Common/LogManager/Builder.h>
 #include <Common/Constants.h>
@@ -86,11 +87,11 @@ D_LAN_GUI::D_LAN_GUI(int& argc, char* argv[]) :
    this->showMainWindow();
 
    RCC::ICoreConnection* coreConnectionPointer = this->coreConnection.data();
-   connect(coreConnectionPointer, SIGNAL(localCoreStatusChanged()), this, SLOT(updateTrayIconMenu()));
-   connect(coreConnectionPointer, SIGNAL(connected()), this, SLOT(updateTrayIconMenu()));
-   connect(coreConnectionPointer, SIGNAL(disconnected(bool)), this, SLOT(updateTrayIconMenu()));
+   connect(coreConnectionPointer, &RCC::ICoreConnection::localCoreStatusChanged, this, &D_LAN_GUI::updateTrayIconMenu);
+   connect(coreConnectionPointer, &RCC::ICoreConnection::connected, this, &D_LAN_GUI::updateTrayIconMenu);
+   connect(coreConnectionPointer, &RCC::ICoreConnection::disconnected, this, &D_LAN_GUI::updateTrayIconMenu);
 
-   connect(&this->trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(trayIconActivated(QSystemTrayIcon::ActivationReason)));
+   connect(&this->trayIcon, &QSystemTrayIcon::activated, this, &D_LAN_GUI::trayIconActivated);
 
    this->updateTrayIconMenu();
 
@@ -119,11 +120,16 @@ void D_LAN_GUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 void D_LAN_GUI::updateTrayIconMenu()
 {
    this->trayIconMenu.clear();
-   this->trayIconMenu.addAction(tr("Show the GUI"), this, SLOT(showMainWindow()));
+   QAction* showGuiAction = this->trayIconMenu.addAction(tr("Show the GUI"));
+   connect(showGuiAction, &QAction::triggered, this, &D_LAN_GUI::showMainWindow);
    if (this->coreConnection->getLocalCoreStatus() == RCC::RUNNING_AS_SERVICE) // We cannot stop a parent process without killing his child.
-      this->trayIconMenu.addAction(tr("Stop the GUI"), this, SLOT(exitGUI()));
+   {
+      QAction* stopGuiAction = this->trayIconMenu.addAction(tr("Stop the GUI"));
+      connect(stopGuiAction, &QAction::triggered, this, &D_LAN_GUI::exitGUI);
+   }
    this->trayIconMenu.addSeparator();
-   this->trayIconMenu.addAction(tr("Exit"), this, SLOT(exit()));
+   QAction* exitAction = this->trayIconMenu.addAction(tr("Exit"));
+   connect(exitAction, &QAction::triggered, this, [this]() { this->exit(); });
 }
 
 /**
@@ -131,7 +137,7 @@ void D_LAN_GUI::updateTrayIconMenu()
   */
 void D_LAN_GUI::loadLanguage(const QString& filename)
 {
-   this->translator.load(filename, QCoreApplication::applicationDirPath() + "/" + Common::Constants::LANGUAGE_DIRECTORY);
+   (void)this->translator.load(filename, QCoreApplication::applicationDirPath() + "/" + Common::Constants::LANGUAGE_DIRECTORY);
 }
 
 void D_LAN_GUI::mainWindowClosed()
@@ -153,8 +159,8 @@ void D_LAN_GUI::showMainWindow()
    else
    {
       this->mainWindow = new MainWindow(this->coreConnection);
-      connect(this->mainWindow, SIGNAL(languageChanged(QString)), this, SLOT(loadLanguage(QString)));
-      connect(this->mainWindow, SIGNAL(destroyed()), this, SLOT(mainWindowClosed()));
+      connect(this->mainWindow, &MainWindow::languageChanged, this, &D_LAN_GUI::loadLanguage);
+      connect(this->mainWindow, &QObject::destroyed, this, &D_LAN_GUI::mainWindowClosed);
       this->mainWindow->show();
    }
 }
@@ -176,7 +182,7 @@ void D_LAN_GUI::exit(bool stopTheCore)
 
    if (this->mainWindow)
    {
-      disconnect(this->mainWindow, SIGNAL(destroyed()), this, SLOT(mainWindowClosed()));
+      disconnect(this->mainWindow, &QObject::destroyed, this, &D_LAN_GUI::mainWindowClosed);
       delete this->mainWindow;
    }
 

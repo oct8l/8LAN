@@ -36,6 +36,7 @@ using namespace PM;
 #include <ResultListener.h>
 #include <IGetEntriesResult.h>
 #include <IGetHashesResult.h>
+#include <IGetChunkResult.h>
 
 const int Tests::PORT = 59487;
 
@@ -61,7 +62,7 @@ void Tests::initTestCase()
    }
    catch(Common::Global::UnableToSetTempDirException& e)
    {
-      QFAIL(e.errorMessage.toAscii().constData());
+      QFAIL(e.errorMessage.toLocal8Bit().constData());
    }
 
    Common::PersistentData::rmValue(Common::Constants::FILE_CACHE, Common::Global::DataFolderType::LOCAL); // Reset the stored cache.
@@ -183,7 +184,7 @@ void Tests::askForRootEntries()
 
    Protos::Core::GetEntries getEntriesMessage;
    QSharedPointer<IGetEntriesResult> result = this->peerManagers[0]->getPeers()[0]->getEntries(getEntriesMessage);
-   connect(result.data(), SIGNAL(result(Protos::Core::GetEntriesResult)), &this->resultListener, SLOT(entriesResult(Protos::Core::GetEntriesResult)));
+   connect(result.data(), &IGetEntriesResult::result, &this->resultListener, &ResultListener::entriesResult);
    result->start();
 
    QElapsedTimer timer;
@@ -212,7 +213,7 @@ void Tests::askForSomeEntries()
    Protos::Core::GetEntries getEntriesMessage1;
    getEntriesMessage1.mutable_dirs()->add_entry()->CopyFrom(this->resultListener.getEntriesResultList().last().entries(0).entry(0));
    QSharedPointer<IGetEntriesResult> result1 = this->peerManagers[0]->getPeers()[0]->getEntries(getEntriesMessage1);
-   connect(result1.data(), SIGNAL(result(Protos::Core::GetEntriesResult)), &this->resultListener, SLOT(entriesResult(Protos::Core::GetEntriesResult)));
+   connect(result1.data(), &IGetEntriesResult::result, &this->resultListener, &ResultListener::entriesResult);
    result1->start();
 
    timer.start();
@@ -228,7 +229,7 @@ void Tests::askForSomeEntries()
    entry->CopyFrom(this->resultListener.getEntriesResultList().last().entries(0).entry(0));
    entry->mutable_shared_dir()->CopyFrom(getEntriesMessage1.dirs().entry(0).shared_dir());
    QSharedPointer<IGetEntriesResult> result2 = this->peerManagers[0]->getPeers()[0]->getEntries(getEntriesMessage2);
-   connect(result2.data(), SIGNAL(result(Protos::Core::GetEntriesResult)), &this->resultListener, SLOT(entriesResult(Protos::Core::GetEntriesResult)));
+   connect(result2.data(), &IGetEntriesResult::result, &this->resultListener, &ResultListener::entriesResult);
    result2->start();
 
    timer.start();
@@ -280,8 +281,9 @@ void Tests::askForHashes()
    fileEntry.mutable_shared_dir()->CopyFrom(this->resultListener.getEntriesResultList().first().entries(0).entry(0).shared_dir());
 
    QSharedPointer<IGetHashesResult> result = this->peerManagers[0]->getPeers()[0]->getHashes(fileEntry);
-   connect(result.data(), SIGNAL(result(const Protos::Core::GetHashesResult&)), &this->resultListener, SLOT(result(const Protos::Core::GetHashesResult&)));
-   connect(result.data(), SIGNAL(nextHash(const Common::Hash&)), &this->resultListener, SLOT(nextHash(const Common::Hash&)));
+   connect(result.data(), &IGetHashesResult::result, &this->resultListener,
+           static_cast<void(ResultListener::*)(const Protos::Core::GetHashesResult&)>(&ResultListener::result));
+   connect(result.data(), &IGetHashesResult::nextHash, &this->resultListener, &ResultListener::nextHash);
    result->start();
 
    timer.start();
@@ -306,14 +308,15 @@ void Tests::askForAChunk()
 {
    qDebug() << "===== askForAChunk() =====";
 
-   connect(this->peerManagers[1].data(), SIGNAL(getChunk(QSharedPointer<FM::IChunk>, int, QSharedPointer<PM::ISocket>)), &this->resultListener, SLOT(getChunk(QSharedPointer<FM::IChunk>, int, QSharedPointer<PM::ISocket>)));
+   connect(this->peerManagers[1].data(), &IPeerManager::getChunk, &this->resultListener, &ResultListener::getChunk);
 
    Protos::Core::GetChunk getChunkMessage;
    getChunkMessage.mutable_chunk()->set_hash(this->resultListener.getLastReceivedHash().getData(), Common::Hash::HASH_SIZE);
    getChunkMessage.set_offset(0);
    QSharedPointer<IGetChunkResult> result = this->peerManagers[0]->getPeers()[0]->getChunk(getChunkMessage);
-   connect(result.data(), SIGNAL(result(const Protos::Core::GetChunkResult&)), &this->resultListener, SLOT(result(const Protos::Core::GetChunkResult&)));
-   connect(result.data(), SIGNAL(stream(QSharedPointer<PM::ISocket>)), &this->resultListener, SLOT(stream(QSharedPointer<PM::ISocket>)));
+   connect(result.data(), &IGetChunkResult::result, &this->resultListener,
+           static_cast<void(ResultListener::*)(const Protos::Core::GetChunkResult&)>(&ResultListener::result));
+   connect(result.data(), &IGetChunkResult::stream, &this->resultListener, &ResultListener::stream);
    result->start();
 
    QElapsedTimer timer;
@@ -362,4 +365,3 @@ bool Tests::deleteAllFiles()
 {
    return Common::Global::recursiveDeleteDirectory("sharedDirs");
 }
-

@@ -45,14 +45,14 @@ int main(int argc, char *argv[])
 
     if (a.arguments().contains("-h") || a.arguments().contains("--help") || a.arguments().size() != 3 || !fileTypes.contains(a.arguments()[1].toLower()))
     {
-       out << "Usage: " << a.arguments()[0] << " (cache | queue) <file>" << endl;
+       out << "Usage: " << a.arguments()[0] << " (cache | queue) <file>" << Qt::endl;
        return 1;
     }
 
     QFile file(a.arguments()[2]);
     if (!file.open(QIODevice::ReadOnly))
     {
-       out << "Unable to read the file " << a.arguments()[2] << endl;
+       out << "Unable to read the file " << a.arguments()[2] << Qt::endl;
        return 1;
     }
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     if (!message->ParsePartialFromFileDescriptor(file.handle()))
     {
-       out << "Parse error for the file " << a.arguments()[2] << endl;
+       out << "Parse error for the file " << a.arguments()[2] << Qt::endl;
        return 1;
     }
 

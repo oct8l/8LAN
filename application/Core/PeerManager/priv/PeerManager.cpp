@@ -21,6 +21,8 @@ using namespace PM;
 
 #include <Protos/common.pb.h>
 
+#include <QMetaMethod>
+
 #include <Common/Hash.h>
 #include <Common/PersistentData.h>
 #include <Common/Settings.h>
@@ -39,7 +41,7 @@ PeerManager::PeerManager(QSharedPointer<FM::IFileManager> fileManager) :
    fileManager(fileManager), self(new PeerSelf(this, this->fileManager))
 {
    this->timer.setInterval(SETTINGS.get<quint32>("pending_socket_timeout") / 10);
-   connect(&this->timer, SIGNAL(timeout()), this, SLOT(checkIdlePendingSockets()));
+   connect(&this->timer, &QTimer::timeout, this, &PeerManager::checkIdlePendingSockets);
 }
 
 PeerManager::~PeerManager()
@@ -112,7 +114,7 @@ IPeer* PeerManager::createPeer(const Hash& ID, const QString& nick)
       return existingPeer;
 
    Peer* peer = new Peer(this, this->fileManager, ID, nick);
-   connect(peer, SIGNAL(unblocked()), this, SLOT(peerUnblocked()));
+   connect(peer, &Peer::unblocked, this, &PeerManager::peerUnblocked);
    this->peers << peer;
 
    return peer;
@@ -132,7 +134,7 @@ void PeerManager::updatePeer(const Common::Hash& ID, const QHostAddress& IP, qui
    if (!peer)
    {
       peer = new Peer(this, this->fileManager, ID);
-      connect(peer, SIGNAL(unblocked()), this, SLOT(peerUnblocked()));
+      connect(peer, &Peer::unblocked, this, &PeerManager::peerUnblocked);
       this->peers << peer;
    }
 
@@ -180,8 +182,8 @@ void PeerManager::newConnection(QTcpSocket* tcpSocket)
       if (!this->timer.isActive())
          this->timer.start();
 
-      connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataReceived()), Qt::DirectConnection);
-      connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(disconnected()), Qt::DirectConnection);
+      connect(tcpSocket, &QTcpSocket::readyRead, this, [this, tcpSocket]() { this->dataReceived(tcpSocket); }, Qt::DirectConnection);
+      connect(tcpSocket, &QTcpSocket::disconnected, this, [this, tcpSocket]() { this->disconnected(tcpSocket); }, Qt::DirectConnection);
       this->pendingSockets << PendingSocket(tcpSocket);
       this->dataReceived(tcpSocket); // The case where some data arrived before the 'connect' above.
    }
@@ -189,7 +191,7 @@ void PeerManager::newConnection(QTcpSocket* tcpSocket)
 
 void PeerManager::onGetChunk(QSharedPointer<FM::IChunk> chunk, int offset, QSharedPointer<PeerMessageSocket> socket)
 {
-   if (this->receivers(SIGNAL(getChunk(QSharedPointer<FM::IChunk>, int, QSharedPointer<PM::ISocket>))) < 1)
+   if (!this->isSignalConnected(QMetaMethod::fromSignal(&IPeerManager::getChunk)))
    {
       Protos::Core::GetChunkResult mess;
       mess.set_status(Protos::Core::GetChunkResult::ERROR_UNKNOWN);

@@ -114,7 +114,7 @@ namespace FM
       int progress;
 
       WaitCondition* dirEvent; ///< Using to wait when a sharing directory is added or deleted.
-      mutable QMutex mutex; ///< Prevent the access from many thread to the internal data like 'filesWithoutHashes' for example.
+      mutable QRecursiveMutex mutex; ///< Prevent the access from many thread to the internal data like 'filesWithoutHashes' for example.
 
       QList<Directory*> unwatchableDirs;
       QElapsedTimer timerScanUnwatchable;

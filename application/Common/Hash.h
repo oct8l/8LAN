@@ -30,7 +30,7 @@
 #include <QDataStream>
 #include <QCryptographicHash>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
 
 #if WITH_MUTEX
 #  include <QMutex>
@@ -41,8 +41,6 @@ namespace Common
    class Hasher;
    class Hash
    {
-      static MTRand mtrand;
-
    public:
       static const int HASH_SIZE = 20;
 
@@ -164,8 +162,6 @@ namespace Common
 
    class Hasher : Uncopyable
    {
-      static MTRand mtrand;
-
    public:
       Hasher();
       // void addPredefinedSalt(); Deprecated.

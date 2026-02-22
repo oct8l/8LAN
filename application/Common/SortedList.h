@@ -19,7 +19,7 @@
 #ifndef COMMON_SORTEDLIST_H
 #define COMMON_SORTEDLIST_H
 
-#include <QLinkedList>
+#include <QList>
 
 /**
   * @class Common::SortedList
@@ -45,11 +45,11 @@ namespace Common
       void itemChanged(const T& item);
       void removeOne(const T& item);
       void clear();
-      inline const QLinkedList<T>& getList() const { return this->list; }
+      inline const QList<T>& getList() const { return this->list; }
 
    private:
       std::function<bool(const T&, const T&)> lesserThan;
-      QLinkedList<T> list;
+      QList<T> list;
    };
 }
 
@@ -67,7 +67,7 @@ SortedList<T>::SortedList(std::function<bool(const T&, const T&)> lesserThan) :
 template <typename T>
 void SortedList<T>::insert(const T& item)
 {
-   for (QMutableLinkedListIterator<T> i(this->list); i.hasNext(); i.next())
+   for (QMutableListIterator<T> i(this->list); i.hasNext(); i.next())
    {
       T e = i.peekNext();
       if (e == item)
@@ -89,7 +89,7 @@ template <typename T>
 template <typename Container>
 void SortedList<T>::insert(const Container& items)
 {   
-   QMutableLinkedListIterator<T> j(list);
+   QMutableListIterator<T> j(list);
 
    for (typename Container::const_iterator i = items.begin(); i != items.end(); i++)
    {

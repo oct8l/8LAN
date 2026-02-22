@@ -20,7 +20,7 @@
 using namespace Common;
 
 #include <QDir>
-#include <QRegExp>
+#include <QRegularExpression>
 
 /**
   * @class Common::Languages
@@ -37,13 +37,16 @@ QList<Language> Languages::getAvailableLanguages(ExeType exeType)
 {
    QList<Language> languages;
    QDir dir(this->path);
+   const QRegularExpression reg(
+      QString("^d_lan_%1\\.(\\w+)\\.qm$").arg(exeType == ExeType::GUI ? "gui" : "core")
+   );
    for (QStringListIterator i(dir.entryList(QStringList() << "*.qm", QDir::Files, QDir::Name)); i.hasNext();)
    {
       QString filename(i.next());
-      QRegExp reg(QString("d_lan_").append(exeType == ExeType::GUI ? "gui" : "core").append("\\.(\\w+)\\.qm"));
-      if (reg.exactMatch(filename))
+      const QRegularExpressionMatch match = reg.match(filename);
+      if (match.hasMatch())
       {
-         QLocale locale(reg.capturedTexts()[1]);
+         QLocale locale(match.captured(1));
          if (locale.language() != QLocale::C)
             languages << Language { filename, locale };
       }
@@ -63,7 +66,11 @@ Language Languages::getBestMatchLanguage(ExeType exeType, QLocale locale)
       Language currentLanguage = i.next();
       if (currentLanguage.locale.language() == locale.language())
       {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 2, 0)
+         if (currentLanguage.locale.territory() == locale.territory()) // Perfect match.
+#else
          if (currentLanguage.locale.country() == locale.country()) // Perfect match.
+#endif
             return currentLanguage;
          if (bestCurrentLanguage.filename.isEmpty())
             bestCurrentLanguage = currentLanguage;

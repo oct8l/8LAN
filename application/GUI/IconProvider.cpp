@@ -28,6 +28,11 @@ using namespace GUI;
 #if defined(Q_OS_WIN32)
    #include <shlobj.h>
    #include <shellapi.h>
+   #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+      #include <QImage>
+   #elif QT_VERSION >= 0x050000
+      #include <QtWinExtras/QtWin>
+   #endif
 #elif defined(Q_OS_LINUX)
    // Nothing.
 #else
@@ -106,7 +111,16 @@ QIcon IconProvider::getIconNative(const QString& extension)
    SHFILEINFO psfi;
    SHGetFileInfo(extension.toStdWString().c_str(), FILE_ATTRIBUTE_NORMAL, &psfi, sizeof(psfi), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
    if (psfi.hIcon != NULL)
+   {
+   #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+      icon = QIcon(QPixmap::fromImage(QImage::fromHICON(psfi.hIcon)));
+   #elif QT_VERSION >= 0x050000
+      icon = QIcon(QtWin::fromHICON(psfi.hIcon));
+   #else
       icon = QIcon(QPixmap::fromWinHICON(psfi.hIcon));
+   #endif
+      DestroyIcon(psfi.hIcon);
+   }
 #else
    icon = IconProvider::iconProvider.icon(QFileIconProvider::File);
 #endif
@@ -117,7 +131,7 @@ QIcon IconProvider::drawWarning(const QIcon& icon)
 {
    QPixmap miniError(":/icons/ressources/error_mini.png");
    QIcon result;
-   foreach (auto size, icon.availableSizes())
+   for (const auto& size : icon.availableSizes())
    {
       QPixmap pixmap = icon.pixmap(size);
       if (pixmap.width() >= miniError.width() && pixmap.height() >= miniError.height() + 1)

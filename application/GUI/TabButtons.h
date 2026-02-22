@@ -23,6 +23,9 @@
 #include <QStyleOption>
 #include <QPainter>
 #include <QEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QEnterEvent>
+#endif
 
 namespace GUI
 {
@@ -33,7 +36,11 @@ namespace GUI
       TabButton(QWidget* parent = nullptr);
       virtual QSize sizeHint() const;
       virtual QSize minimumSizeHint() const;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+      virtual void enterEvent(QEnterEvent *event);
+#else
       virtual void enterEvent(QEvent *event);
+#endif
       virtual void leaveEvent(QEvent *event);
       virtual void paintEvent(QPaintEvent *event);
 

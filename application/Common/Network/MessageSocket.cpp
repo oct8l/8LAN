@@ -138,7 +138,7 @@ void MessageSocket::send(MessageHeader::MessageType type, const google::protobuf
    if (!this->listening)
       return;
 
-   MessageHeader header(type, message ? message->ByteSize() : 0, this->localID);
+   MessageHeader header(type, message ? static_cast<quint32>(message->ByteSizeLong()) : 0, this->localID);
 
    MESSAGE_SOCKET_LOG_DEBUG(QString("Socket[%1]::send : %2 to %3\n%4").arg(this->num).arg(header.toStr()).arg(this->remoteID.toStr()).arg(message ? ProtoHelper::getDebugStr(*message) : "<empty message>"));
 
@@ -165,8 +165,8 @@ void MessageSocket::startListening()
 
    this->listening = true;
 
-   connect(this->socket, SIGNAL(readyRead()), this, SLOT(dataReceivedSlot()), Qt::DirectConnection);
-   connect(this->socket, SIGNAL(disconnected()), this, SLOT(disconnectedSlot()), Qt::DirectConnection);
+   connect(this->socket, &QAbstractSocket::readyRead, this, &MessageSocket::dataReceivedSlot, Qt::DirectConnection);
+   connect(this->socket, &QAbstractSocket::disconnected, this, &MessageSocket::disconnectedSlot, Qt::DirectConnection);
 
    this->dataReceivedSlot();
 }
@@ -179,8 +179,8 @@ void MessageSocket::stopListening()
 {
    MESSAGE_SOCKET_LOG_DEBUG(QString("Socket[%1] stopping to listen").arg(this->num));
 
-   disconnect(this->socket, SIGNAL(readyRead()), this, SLOT(dataReceivedSlot()));
-   disconnect(this->socket, SIGNAL(disconnected()), this, SLOT(disconnectedSlot()));
+   disconnect(this->socket, &QAbstractSocket::readyRead, this, &MessageSocket::dataReceivedSlot);
+   disconnect(this->socket, &QAbstractSocket::disconnected, this, &MessageSocket::disconnectedSlot);
 
    this->listening = false;
 }

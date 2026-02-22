@@ -61,11 +61,11 @@ SharedDirectory::SharedDirectory(Cache* cache, const QString& path, const Common
 void SharedDirectory::mergeSubSharedDirectories()
 {
    // Merges the sub-directories of each directory found.
-   foreach (SharedDirectory* subDir, this->cache->getSubSharedDirectories(this->getFullPath()))
+   for (auto* subDir : this->cache->getSubSharedDirectories(this->getFullPath()))
    {
       // Create the missing directories.
-      const QStringList& parentFolders = this->getFullPath().split('/', QString::SkipEmptyParts);
-      const QStringList& childFolders = subDir->getFullPath().split('/', QString::SkipEmptyParts);
+      const QStringList& parentFolders = this->getFullPath().split('/', Qt::SkipEmptyParts);
+      const QStringList& childFolders = subDir->getFullPath().split('/', Qt::SkipEmptyParts);
       Directory* current = this;
       for (int i = parentFolders.size(); i < childFolders.size(); i++)
          current = current->createSubDir(childFolders[i]);

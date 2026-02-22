@@ -34,7 +34,7 @@ using namespace Common;
   */
 
 TransferRateCalculator::TransferRateCalculator() :
-   mutex(QMutex::Recursive)
+   mutex()
 {
    this->reset();
 }
@@ -122,4 +122,3 @@ void TransferRateCalculator::update(int value)
       }
    }
 }
-

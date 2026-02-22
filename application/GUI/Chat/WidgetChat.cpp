@@ -21,6 +21,8 @@
 using namespace GUI;
 
 #include <QMenu>
+#include <QAction>
+#include <QAbstractButton>
 #include <QClipboard>
 #include <QKeyEvent>
 #include <QScrollBar>
@@ -35,7 +37,7 @@ using namespace GUI;
 
 void ChatDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-   QStyleOptionViewItemV4 newOption(option);
+   QStyleOptionViewItem newOption(option);
    newOption.state = option.state & (~QStyle::State_HasFocus);
    QStyledItemDelegate::paint(painter, newOption, index);
 }
@@ -66,13 +68,13 @@ WidgetChat::WidgetChat(QSharedPointer<RCC::ICoreConnection> coreConnection, Peer
    this->ui->tblChat->setItemDelegate(&this->chatDelegate);
    this->ui->tblChat->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
    this->ui->tblChat->horizontalHeader()->setVisible(false);
-   this->ui->tblChat->horizontalHeader()->setResizeMode(0, QHeaderView::ResizeToContents);
-   this->ui->tblChat->horizontalHeader()->setResizeMode(1, QHeaderView::ResizeToContents);
-   this->ui->tblChat->horizontalHeader()->setResizeMode(2, QHeaderView::Stretch);
+   this->ui->tblChat->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->tblChat->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+   this->ui->tblChat->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
 
-   //this->ui->tblChat->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-   this->ui->tblChat->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-   this->ui->tblChat->verticalHeader()->setDefaultSectionSize(QApplication::fontMetrics().height() + 2);
+   //this->ui->tblChat->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+   this->ui->tblChat->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+   this->ui->tblChat->verticalHeader()->setDefaultSectionSize(QFontMetrics(qApp->font()).height() + 2);
 
    this->ui->tblChat->verticalHeader()->setVisible(false);
    this->ui->tblChat->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -84,13 +86,13 @@ WidgetChat::WidgetChat(QSharedPointer<RCC::ICoreConnection> coreConnection, Peer
    this->ui->tblChat->setEditTriggers(QAbstractItemView::AllEditTriggers);
 
    this->ui->tblChat->setContextMenuPolicy(Qt::CustomContextMenu);
-   connect(this->ui->tblChat, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(displayContextMenuDownloads(const QPoint&)));
+   connect(this->ui->tblChat, &QWidget::customContextMenuRequested, this, &WidgetChat::displayContextMenuDownloads);
 
-   connect(&this->chatModel, SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(newRows(const QModelIndex&, int, int)));
-   connect(this->ui->tblChat->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(scrollChanged(int)));
+   connect(&this->chatModel, &QAbstractItemModel::rowsInserted, this, &WidgetChat::newRows);
+   connect(this->ui->tblChat->verticalScrollBar(), &QAbstractSlider::valueChanged, this, &WidgetChat::scrollChanged);
 
-   connect(this->ui->butSend, SIGNAL(clicked()), this, SLOT(sendMessage()));
-   connect(this->ui->txtMessage, SIGNAL(returnPressed()), this, SLOT(sendMessage()));
+   connect(this->ui->butSend, &QAbstractButton::clicked, this, &WidgetChat::sendMessage);
+   connect(this->ui->txtMessage, &QLineEdit::returnPressed, this, &WidgetChat::sendMessage);
 }
 
 WidgetChat::~WidgetChat()
@@ -140,7 +142,8 @@ void WidgetChat::scrollChanged(int value)
 void WidgetChat::displayContextMenuDownloads(const QPoint& point)
 {
    QMenu menu;
-   menu.addAction(tr("Copy selected lines"), this, SLOT(copySelectedLineToClipboard()));
+   QAction* copyAction = menu.addAction(tr("Copy selected lines"));
+   connect(copyAction, &QAction::triggered, this, &WidgetChat::copySelectedLineToClipboard);
    menu.exec(this->ui->tblChat->mapToGlobal(point));
 }
 

@@ -99,7 +99,7 @@ namespace Common
 
       QString filename; ///< The name of the file cache saved in the home directory.
       google::protobuf::Message* settings;
-      mutable QMutex mutex;
+      mutable QRecursiveMutex mutex;
 
       const google::protobuf::Descriptor* descriptor;
    };

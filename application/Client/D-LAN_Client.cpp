@@ -34,15 +34,15 @@ D_LAN_Client::D_LAN_Client(int argc, char* argv[]) :
    QCoreApplication(argc, argv),
    out(stdout)
 {
-   this->out << "D-LAN Client" << endl;
+   this->out << "D-LAN Client" << Qt::endl;
 
-   connect(&this->consoleReader, SIGNAL(newLine(QString)), this, SLOT(newCommandLine(QString)), Qt::QueuedConnection);
+   connect(&this->consoleReader, &Common::ConsoleReader::newLine, this, &D_LAN_Client::newCommandLine, Qt::QueuedConnection);
    this->consoleReader.start();
 }
 
-QScriptValue D_LAN_Client::newConnection()
+QJSValue D_LAN_Client::newConnection()
 {
-   return this->engine.newQObject(new CoreConnectionProxy(), QScriptEngine::ScriptOwnership);
+   return this->engine.newQObject(new CoreConnectionProxy());
 }
 
 //Q_SCRIPT_DECLARE_QMETAOBJECT(QFile, QObject*)
@@ -61,37 +61,32 @@ void D_LAN_Client::newCommandLine(QString line)
    }
    else if (line == "run")
    {
-      foreach (QString e, this->engine.availableExtensions())
-         this->out << e << endl;
-
-      QScriptValue objectValue = this->engine.newQObject(this);
+      QJSValue objectValue = this->engine.newQObject(this);
       this->engine.globalObject().setProperty("dlan", objectValue);
 
-      QScriptValue qfileClass = this->engine.scriptValueFromQMetaObject<QFile>();
+      QJSValue qfileClass = this->engine.newQMetaObject(&QFile::staticMetaObject);
       engine.globalObject().setProperty("QFile", qfileClass);
-//      QScriptValue qiodeviceClass = this->engine.scriptValueFromQMetaObject<QIODevice>();
-//      engine.globalObject().setProperty("QIOdevice", qiodeviceClass);
 
       QFile script("../../test_script_1.js");
       if (script.open(QIODevice::ReadOnly))
       {
-         QScriptValue value = this->engine.evaluate(script.readAll());
+         QJSValue value = this->engine.evaluate(QString::fromUtf8(script.readAll()));
 
-         if (this->engine.hasUncaughtException())
-            this->out << "Script error: " << value.toString() << endl;
+         if (value.isError())
+            this->out << "Script error: " << value.toString() << Qt::endl;
       }
       else
-         this->out << "Unable to open the script file" << endl;
+         this->out << "Unable to open the script file" << Qt::endl;
    }
    else
    {
-      this->out << "Unkown command, type help for more information" << endl;
+      this->out << "Unkown command, type help for more information" << Qt::endl;
    }
 }
 
 void D_LAN_Client::printHelp()
 {
-   this->out << "Commands:" << endl <<
-                " - help : print this help " << endl <<
-                " - run <script name> : run a script name" << endl;
+   this->out << "Commands:" << Qt::endl <<
+                " - help : print this help " << Qt::endl <<
+                " - run <script name> : run a script name" << Qt::endl;
 }

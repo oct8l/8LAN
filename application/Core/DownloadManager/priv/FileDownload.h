@@ -23,7 +23,7 @@
 #include <QSharedPointer>
 #include <QTime>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
 
 #include <Common/ThreadPool.h>
 
@@ -43,7 +43,6 @@ namespace DM
    class FileDownload : public Download
    {
       Q_OBJECT
-      static MTRand mtrand;
    public:
       FileDownload(
          QSharedPointer<FM::IFileManager> fileManager,

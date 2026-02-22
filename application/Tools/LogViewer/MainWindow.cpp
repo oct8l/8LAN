@@ -19,6 +19,9 @@
 #include <MainWindow.h>
 #include <ui_MainWindow.h>
 
+#include <QAbstractButton>
+#include <QAction>
+#include <QComboBox>
 #include <QFileDialog>
 #include <QFileInfo>
 
@@ -34,32 +37,32 @@ MainWindow::MainWindow(QWidget *parent) :
 {
    this->ui->setupUi(this);
 
-   connect(this->ui->actOpen, SIGNAL(activated()), this, SLOT(openDir()));
-   connect(this->ui->butFilterAll, SIGNAL(clicked()), this, SLOT(checkAll()));
-   connect(this->ui->butRefresh, SIGNAL(clicked()), this, SLOT(reloadAll()));
+   connect(this->ui->actOpen, &QAction::triggered, this, &MainWindow::openDir);
+   connect(this->ui->butFilterAll, &QAbstractButton::clicked, this, &MainWindow::checkAll);
+   connect(this->ui->butRefresh, &QAbstractButton::clicked, this, &MainWindow::reloadAll);
 
    this->currentDir.setSorting(QDir::Name);
    this->ui->tblLog->setWordWrap(false);
    this->ui->tblLog->setModel(&this->model);
    this->ui->tblLog->setItemDelegate(new TableLogItemDelegate(this));
 
-   this->ui->tblLog->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
+   this->ui->tblLog->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
    this->ui->tblLog->horizontalHeader()->resizeSection(0, 140);
    this->ui->tblLog->horizontalHeader()->resizeSection(1, 50);
    this->ui->tblLog->horizontalHeader()->resizeSection(2, 140);
    this->ui->tblLog->horizontalHeader()->resizeSection(3, 50);
    this->ui->tblLog->horizontalHeader()->resizeSection(4, 180);
    this->ui->tblLog->horizontalHeader()->resizeSection(5, 1200);
-   this->ui->tblLog->verticalHeader()->setResizeMode(QHeaderView::Fixed);
+   this->ui->tblLog->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
    this->ui->tblLog->verticalHeader()->setDefaultSectionSize(17);
    this->ui->tblLog->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
    this->severities = new TooglableList(this);
    this->modules = new TooglableList(this);
    this->threads = new TooglableList(this);
-   connect(this->severities, SIGNAL(stateChanged()), this, SLOT(filtersChange()));
-   connect(this->modules, SIGNAL(stateChanged()), this, SLOT(filtersChange()));
-   connect(this->threads, SIGNAL(stateChanged()), this, SLOT(filtersChange()));
+   connect(this->severities, &TooglableList::stateChanged, this, &MainWindow::filtersChange);
+   connect(this->modules, &TooglableList::stateChanged, this, &MainWindow::filtersChange);
+   connect(this->threads, &TooglableList::stateChanged, this, &MainWindow::filtersChange);
 
    this->ui->laySeverity->addWidget(this->severities);
    this->ui->layModule->addWidget(this->modules);
@@ -68,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
    this->lblStatus = new QLabel(this->ui->statusBar);
    this->ui->statusBar->addWidget(this->lblStatus);
 
-   connect(this->ui->butPause, SIGNAL(toggled(bool)), this, SLOT(setWatchingPause(bool)));
+   connect(this->ui->butPause, &QAbstractButton::toggled, this, &MainWindow::setWatchingPause);
    this->setWatchingPause(false);
 }
 
@@ -112,7 +115,7 @@ void MainWindow::openDir()
 void MainWindow::setCurrentFile(QString file)
 {
    this->closeCurrentFile();
-   disconnect(&this->model, SIGNAL(newLogEntries(int)), 0, 0);
+   disconnect(&this->model, &TableLogModel::newLogEntries, nullptr, nullptr);
 
    this->currentFile = new QFile(this->currentDir.absolutePath() + '/' + file);
    if (currentFile->exists() && this->currentFile->open(QIODevice::ReadOnly))
@@ -121,12 +124,12 @@ void MainWindow::setCurrentFile(QString file)
       this->refreshFilters();
 
       // New messages can be logged after the file is loaded, thus some new severities/modules/threads can appear.
-      connect(&this->model, SIGNAL(newSeverity(QString)), this->severities, SLOT(addItem(const QString&)));
-      connect(&this->model, SIGNAL(newModule(QString)), this->modules, SLOT(addItem(const QString&)));
-      connect(&this->model, SIGNAL(newThread(QString)), this->threads, SLOT(addItem(const QString&)));
+      connect(&this->model, &TableLogModel::newSeverity, this->severities, &TooglableList::addItem);
+      connect(&this->model, &TableLogModel::newModule, this->modules, &TooglableList::addItem);
+      connect(&this->model, &TableLogModel::newThread, this->threads, &TooglableList::addItem);
 
       this->ui->tblLog->scrollToBottom();
-      connect(&this->model, SIGNAL(newLogEntries(int)), this, SLOT(newLogEntries(int)));
+      connect(&this->model, &TableLogModel::newLogEntries, this, &MainWindow::newLogEntries);
    }
 }
 
@@ -139,10 +142,10 @@ void MainWindow::filtersChange()
       return;
 
    // TODO: find a better way to avoid slowing down.
-   this->ui->tblLog->verticalHeader()->setResizeMode(QHeaderView::Custom);
+   this->ui->tblLog->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
    for (int i = 0; i < this->model.rowCount(); i++)
       this->filterRow(i);
-   this->ui->tblLog->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+   this->ui->tblLog->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
 /**
@@ -185,9 +188,9 @@ void MainWindow::newLogEntries(int n)
 void MainWindow::setWatchingPause(bool pause)
 {
    if (pause)
-      disconnect(&this->watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged()));
+      disconnect(&this->watcher, &QFileSystemWatcher::directoryChanged, this, &MainWindow::directoryChanged);
    else
-      connect(&this->watcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged()));
+      connect(&this->watcher, &QFileSystemWatcher::directoryChanged, this, &MainWindow::directoryChanged);
 
    this->model.setWatchingPause(pause);
 }
@@ -225,10 +228,10 @@ void MainWindow::readCurrentDir()
 {
    this->currentDir.refresh();
    QStringList entries(this->currentDir.entryList());
-   disconnect(this->ui->cmbFile, SIGNAL(currentIndexChanged(QString)), 0, 0);
+   disconnect(this->ui->cmbFile, &QComboBox::currentTextChanged, nullptr, nullptr);
    this->ui->cmbFile->clear();
    this->lblStatus->setText(this->currentDir.absolutePath());
-   foreach (QString d, entries)
+   for (const auto& d : entries)
    {
       if (d.endsWith(".log"))
       {
@@ -240,14 +243,14 @@ void MainWindow::readCurrentDir()
    if (this->ui->cmbFile->count() > 0)
       this->setCurrentFile(this->ui->cmbFile->itemText(this->ui->cmbFile->count() - 1));
 
-   connect(this->ui->cmbFile, SIGNAL(currentIndexChanged(QString)), this, SLOT(setCurrentFile(QString)));
+   connect(this->ui->cmbFile, &QComboBox::currentTextChanged, this, &MainWindow::setCurrentFile);
 }
 
 void MainWindow::closeCurrentFile()
 {
-   disconnect(&this->model, SIGNAL(newSeverity(QString)), this->severities, SLOT(addItem(const QString&)));
-   disconnect(&this->model, SIGNAL(newModule(QString)), this->modules, SLOT(addItem(const QString&)));
-   disconnect(&this->model, SIGNAL(newThread(QString)), this->threads, SLOT(addItem(const QString&)));
+   disconnect(&this->model, &TableLogModel::newSeverity, this->severities, &TooglableList::addItem);
+   disconnect(&this->model, &TableLogModel::newModule, this->modules, &TooglableList::addItem);
+   disconnect(&this->model, &TableLogModel::newThread, this->threads, &TooglableList::addItem);
    this->model.removeDataSource();
    if (this->currentFile)
    {

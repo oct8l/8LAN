@@ -21,7 +21,6 @@ using namespace CoreSpace;
 
 #include <QObject>
 #include <QThread>
-#include <QRegExp>
 
 #include <Common/Constants.h>
 
@@ -35,13 +34,13 @@ CoreService::CoreService(bool resetSettings, QLocale locale, int argc, char** ar
    // If Core is launched from the console we read user input.
    for (int i = 1; i < argc; i++)
    {
-      QString currentArg = QString::fromAscii(argv[i]);
+      QString currentArg = QString::fromLocal8Bit(argv[i]);
       if (currentArg == "-e" || currentArg == "--exec")
       {
-         connect(&this->consoleReader, SIGNAL(newLine(QString)), this, SLOT(processUserInput(QString)), Qt::QueuedConnection);
+         connect(&this->consoleReader, &Common::ConsoleReader::newLine, this, &CoreService::processUserInput, Qt::QueuedConnection);
          this->consoleReader.start();
          QTextStream out(stdout);
-         out << "D-LAN Core started with console support" << endl;
+         out << "D-LAN Core started with console support" << Qt::endl;
          CoreService::printCommands();
          break;
       }
@@ -95,7 +94,7 @@ void CoreService::processUserInput(QString input)
 void CoreService::printCommands()
 {
    QTextStream out(stdout);
-   out << "Commands:" << endl
-       << " - " << ConsoleReader::QUIT_COMMAND << " : stop the core" << endl
-       << " - dumpwi : dump the word index in the log as a warning" << endl;
+   out << "Commands:" << Qt::endl
+       << " - " << ConsoleReader::QUIT_COMMAND << " : stop the core" << Qt::endl
+       << " - dumpwi : dump the word index in the log as a warning" << Qt::endl;
 }

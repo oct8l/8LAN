@@ -19,6 +19,7 @@
 #include <Downloads/DownloadsFlatModel.h>
 using namespace GUI;
 
+#include <algorithm>
 #include <limits>
 
 #include <QPixmap>
@@ -108,7 +109,7 @@ QString DownloadsFlatModel::getPath(const QModelIndex& index, bool appendFilenam
    if (sharedDir.isNull())
       return QString();
 
-   QString path = sharedDir.path.left(sharedDir.path.count() - 1);
+   QString path = sharedDir.path.left(sharedDir.path.size() - 1);
    return path.append(Common::ProtoHelper::getRelativePath(this->downloads[index.row()].local_entry(), appendFilename));
 }
 
@@ -176,7 +177,7 @@ bool DownloadsFlatModel::dropMimeData(const QMimeData* data, Qt::DropAction acti
    // We remove the moved download from the list (not necessery but nicer for the user experience).
    if (!rows.isEmpty())
    {
-      qSort(rows.begin(), rows.end());
+      std::sort(rows.begin(), rows.end());
 
       int rowBegin = rows.size() - 1;
       int rowEnd = rowBegin;

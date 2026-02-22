@@ -196,7 +196,7 @@ void PeerMessageSocket::close()
   * When we ask to the fileManager some hashes for a given file this
   * slot will be called each time a new hash is available.
   */
-void PeerMessageSocket::nextAskedHash(Common::Hash hash)
+void PeerMessageSocket::nextAskedHash(const Common::Hash& hash)
 {
    Protos::Common::Hash hashProto;
    hashProto.set_hash(hash.getData(), Common::Hash::HASH_SIZE);
@@ -254,8 +254,8 @@ void PeerMessageSocket::onNewMessage(Common::MessageHeader::MessageType type, co
          for (int i = 0; i < getEntries.dirs().entry_size(); i++)
          {
             QSharedPointer<FM::IGetEntriesResult> entriesResult = this->fileManager->getScannedEntries(getEntries.dirs().entry(i));
-            connect(entriesResult.data(), SIGNAL(result(const Protos::Common::Entries&)), this, SLOT(entriesResult(const Protos::Common::Entries&)), Qt::DirectConnection);
-            connect(entriesResult.data(), SIGNAL(timeout()), this, SLOT(entriesResultTimeout()), Qt::DirectConnection);
+            connect(entriesResult.data(), &FM::IGetEntriesResult::result, this, &PeerMessageSocket::entriesResult, Qt::DirectConnection);
+            connect(entriesResult.data(), &Common::Timeoutable::timeout, this, &PeerMessageSocket::entriesResultTimeout, Qt::DirectConnection);
             this->entriesResultsToReceive << entriesResult;
             this->entriesResultMessage.add_entries();
          }
@@ -267,7 +267,7 @@ void PeerMessageSocket::onNewMessage(Common::MessageHeader::MessageType type, co
          if (this->entriesResultsToReceive.isEmpty())
             this->sendEntriesResultMessage();
          else
-            foreach (QSharedPointer<FM::IGetEntriesResult> entriesResult, this->entriesResultsToReceive)
+            for (const auto& entriesResult : this->entriesResultsToReceive)
                entriesResult->start();
       }
       break;
@@ -281,7 +281,7 @@ void PeerMessageSocket::onNewMessage(Common::MessageHeader::MessageType type, co
          const Protos::Core::GetHashes& getHashes = static_cast<const Protos::Core::GetHashes&>(message);
 
          this->currentHashesResult = this->fileManager->getHashes(getHashes.file());
-         connect(this->currentHashesResult.data(), SIGNAL(nextHash(Common::Hash)), this, SLOT(nextAskedHash(Common::Hash)), Qt::QueuedConnection);
+         connect(this->currentHashesResult.data(), &FM::IGetHashesResult::nextHash, this, &PeerMessageSocket::nextAskedHash, Qt::QueuedConnection);
          Protos::Core::GetHashesResult res = this->currentHashesResult->start();
 
          this->nbHash = res.nb_hash();
@@ -365,7 +365,7 @@ void PeerMessageSocket::initUnactiveTimer()
 {
    this->inactiveTimer.setSingleShot(true);
    this->inactiveTimer.setInterval(SETTINGS.get<quint32>("idle_socket_timeout"));
-   connect(&this->inactiveTimer, SIGNAL(timeout()), this, SLOT(close()));
+   connect(&this->inactiveTimer, &QTimer::timeout, this, &PeerMessageSocket::close);
    this->inactiveTimer.start();
 }
 

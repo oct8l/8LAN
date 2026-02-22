@@ -21,7 +21,9 @@ using namespace CoreSpace;
 
 #include <Protos/core_settings.pb.h>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
+
+#include <QRegularExpression>
 
 #include <Common/PersistentData.h>
 #include <Common/Constants.h>
@@ -110,7 +112,7 @@ void Core::start()
    this->networkListener = NL::Builder::newNetworkListener(this->fileManager, this->peerManager, this->uploadManager, this->downloadManager);
    this->remoteControlManager = RCM::Builder::newRemoteControlManager(this->fileManager, this->peerManager, this->uploadManager, this->downloadManager, this->networkListener);
 
-   connect(this->remoteControlManager.data(), SIGNAL(languageDefined(QLocale)), this, SLOT(setLanguage(QLocale)));
+   connect(this->remoteControlManager.data(), &RCM::IRemoteControlManager::languageDefined, this, [this](QLocale locale) { this->setLanguage(locale); });
 
    L_USER(QObject::tr("Ready to serve"));
 }
@@ -122,8 +124,7 @@ void Core::dumpWordIndex() const
 
 void Core::changePassword(const QString& newPassword)
 {
-   MTRand mtrand;
-   quint64 salt = static_cast<quint64>(mtrand.randInt()) << 32 | mtrand.randInt();
+   quint64 salt = QRandomGenerator::global()->generate64();
 
    SETTINGS.set("remote_password", Common::Hasher::hashWithSalt(newPassword, salt));
    SETTINGS.set("salt", salt);
@@ -145,7 +146,7 @@ void Core::setLanguage(QLocale locale, bool load)
       Common::Language lang = languages.getBestMatchLanguage(Common::Languages::ExeType::CORE, locale);
       SETTINGS.set("language", lang.locale);
       SETTINGS.save();
-      this->translator.load(lang.filename, QCoreApplication::applicationDirPath() + "/" + Common::Constants::LANGUAGE_DIRECTORY);
+      (void)this->translator.load(lang.filename, QCoreApplication::applicationDirPath() + "/" + Common::Constants::LANGUAGE_DIRECTORY);
    }
    else
    {
@@ -171,8 +172,8 @@ void Core::checkSettingsIntegrity()
 
    this->checkSetting("minimum_duration_when_hashing", 100u, 30u * 1000u);
    this->checkSetting("scan_period_unwatchable_dirs", 1000u, 60u * 60u * 1000u);
-   static const QRegExp unfinishedSuffixExp("^\\.\\S+$");
-   if (!unfinishedSuffixExp.exactMatch(SETTINGS.get<QString>("unfinished_suffix_term")))
+   static const QRegularExpression unfinishedSuffixExp("^\\.\\S+$");
+   if (!unfinishedSuffixExp.match(SETTINGS.get<QString>("unfinished_suffix_term")).hasMatch())
    {
       L_ERRO("Settings : 'unfinished_suffix_term' must begin with a dot and not contain any space character");
       SETTINGS.rm("unfinished_suffix_term");
@@ -209,6 +210,8 @@ void Core::checkSettingsIntegrity()
    this->checkSetting("max_number_of_search_result_to_send", 1u, 10000u);
    this->checkSetting("max_number_of_result_shown", 1u, 100000u);
    this->checkSetting("max_number_of_chat_message_saved", 1u, 1000000u);
+   this->checkSetting("imalive_max_per_ip_per_min", 1u, 600u);
+   this->checkSetting("imalive_ban_duration_ms", 1000u, 60u * 60u * 1000u);
 
    this->checkSetting("remote_control_port", 1u, 65535u);
    this->checkSetting("remote_refresh_rate", 500u, 10u * 1000u);

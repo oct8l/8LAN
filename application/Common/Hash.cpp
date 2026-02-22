@@ -20,15 +20,12 @@
 using namespace Common;
 
 #include <QtGlobal>
-#include <QTime>
 
 /**
   * @class Common::Hash
   *
   * An Über-optimized hash.
   */
-
-MTRand Hash::mtrand;
 
 const char Hash::NULL_HASH[HASH_SIZE] = {};
 
@@ -153,15 +150,15 @@ Hash& Hash::operator=(Hash&& h)
   */
 QString Hash::toStr() const
 {
-   QString ret(2 * HASH_SIZE);
+   QString ret(2 * HASH_SIZE, QChar());
    const char* hashData = this->data ? this->data->hash : NULL_HASH;
 
    for (int i = 0; i < HASH_SIZE; i++)
    {
       char p1 = (hashData[i] & 0xF0) >> 4;
       char p2 = hashData[i] & 0x0F;
-      ret[i*2] = p1 <= 9 ? '0' + p1 : 'a' + (p1-10);
-      ret[i*2 + 1] = p2 <= 9 ? '0' + p2 : 'a' + (p2-10);
+      ret[i*2] = QChar(p1 <= 9 ? '0' + p1 : 'a' + (p1-10));
+      ret[i*2 + 1] = QChar(p2 <= 9 ? '0' + p2 : 'a' + (p2-10));
    }
    return ret;
 }
@@ -209,17 +206,17 @@ Hash Hash::rand()
    Hash hash;
    hash.newData();
    for (int i = 0; i < HASH_SIZE; i++)
-      hash.data->hash[i] = static_cast<char>(Hash::mtrand.randInt(255));
+      hash.data->hash[i] = static_cast<char>(QRandomGenerator::global()->bounded(256));
    return hash;
 }
 
 Hash Hash::rand(quint32 seed)
 {
-   MTRand mtrand(seed);
+   QRandomGenerator seeded(seed);
    Hash hash;
    hash.newData();
    for (int i = 0; i < HASH_SIZE; i++)
-      hash.data->hash[i] = static_cast<char>(mtrand.randInt(255));
+      hash.data->hash[i] = static_cast<char>(seeded.bounded(256));
    return hash;
 }
 
@@ -233,8 +230,8 @@ Hash Hash::fromStr(const QString& str)
 
    for (int i = 0; i < HASH_SIZE && 2*i + 1 < strLower.size(); i++)
    {
-      char c1 = strLower[2*i].toAscii();
-      char c2 = strLower[2*i + 1].toAscii();
+      char c1 = strLower[2*i].toLatin1();
+      char c2 = strLower[2*i + 1].toLatin1();
 
       char p1 = c1 <= '9' ? c1 - '0' : c1 - 'a' + 10;
       char p2 = c2 <= '9' ? c2 - '0' : c2 - 'a' + 10;
@@ -252,8 +249,6 @@ Hash Hash::fromStr(const QString& str)
   *
   * To create hash from row data.
   */
-
-MTRand Hasher::mtrand;
 
 Hasher::Hasher() :
    cryptographicHash(QCryptographicHash::Sha1)
@@ -300,7 +295,7 @@ void Hasher::addData(const char* data, int size)
    Q_ASSERT(data);
    Q_ASSERT(size >= 0);
 
-   this->cryptographicHash.addData(data, size);
+   this->cryptographicHash.addData(QByteArray::fromRawData(data, size));
 }
 
 Hash Hasher::getResult()
@@ -354,12 +349,12 @@ Common::Hash Hasher::hashWithSalt(const Common::Hash& hash, quint64 salt)
 
 Hash Hasher::hashWithRandomSalt(const QString& str, quint64& salt)
 {
-   salt = static_cast<quint64>(Hash::mtrand.randInt()) << 32 | Hash::mtrand.randInt();
+   salt = QRandomGenerator::global()->generate64();
    return Hasher::hashWithSalt(str, salt);
 }
 
 Hash Hasher::hashWithRandomSalt(const Common::Hash& hash, quint64& salt)
 {
-   salt = static_cast<quint64>(Hash::mtrand.randInt()) << 32 | Hash::mtrand.randInt();
+   salt = QRandomGenerator::global()->generate64();
    return Hasher::hashWithSalt(hash, salt);
 }

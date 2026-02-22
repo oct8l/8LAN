@@ -20,6 +20,7 @@
 using namespace GUI;
 
 #include <QPixmap>
+#include <QMimeData>
 
 #include <Common/ProtoHelper.h>
 #include <Common/Global.h>
@@ -32,8 +33,10 @@ DownloadsModel::DownloadsModel(QSharedPointer<RCC::ICoreConnection> coreConnecti
    sharedDirsModel(sharedDirsModel),
    filter(filter)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
    qRegisterMetaTypeStreamOperators<Progress>("Progress"); // Don't know where to put this call . . .
-   connect(this->coreConnection.data(), SIGNAL(newState(Protos::GUI::State)), this, SLOT(onNewState(Protos::GUI::State)));
+#endif
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::newState, this, &DownloadsModel::onNewState);
 }
 
 int DownloadsModel::columnCount(const QModelIndex& /*parent*/) const

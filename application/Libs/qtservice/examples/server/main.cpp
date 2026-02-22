@@ -44,6 +44,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QStringList>
 #include <QtCore/QDir>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 
 #include "qtservice.h"
@@ -97,7 +98,7 @@ private slots:
         // document back.
         QTcpSocket* socket = (QTcpSocket*)sender();
         if (socket->canReadLine()) {
-            QStringList tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
+            QStringList tokens = QString(socket->readLine()).split(QRegularExpression("[ \r\n][ \r\n]*"));
             if (tokens[0] == "GET") {
                 QTextStream os(socket);
                 os.setAutoDetectUnicode(true);

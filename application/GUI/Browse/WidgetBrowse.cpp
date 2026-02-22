@@ -21,6 +21,7 @@
 using namespace GUI;
 
 #include <QMenu>
+#include <QAction>
 #include <QPainter>
 #include <QIcon>
 #include <QUrl>
@@ -33,7 +34,7 @@ using namespace GUI;
 
 void BrowseDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-   QStyleOptionViewItemV4 newOption(option);
+   QStyleOptionViewItem newOption(option);
    newOption.state = option.state & (~QStyle::State_HasFocus);
    QStyledItemDelegate::paint(painter, newOption, index);
 }
@@ -54,26 +55,26 @@ WidgetBrowse::WidgetBrowse(QSharedPointer<RCC::ICoreConnection> coreConnection, 
    this->ui->treeView->setModel(&this->browseModel);
    this->ui->treeView->setItemDelegate(&this->browseDelegate);
    this->ui->treeView->header()->setVisible(false);
-   this->ui->treeView->header()->setResizeMode(0, QHeaderView::ResizeToContents);
-   this->ui->treeView->header()->setResizeMode(1, QHeaderView::Stretch);
+   this->ui->treeView->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->treeView->header()->setSectionResizeMode(1, QHeaderView::Stretch);
 
    this->ui->treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
    this->ui->treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
    this->ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
-   connect(this->ui->treeView, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(displayContextMenuDownload(const QPoint&)));
-   connect(this->ui->treeView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(entryDoubleClicked(const QModelIndex&)));
+   connect(this->ui->treeView, &QWidget::customContextMenuRequested, this, &WidgetBrowse::displayContextMenuDownload);
+   connect(this->ui->treeView, &QAbstractItemView::doubleClicked, this, &WidgetBrowse::entryDoubleClicked);
 
    if (this->coreConnection->getRemoteID() == this->peerID)
       this->ui->butDownload->hide();
    else
-      connect(this->ui->butDownload, SIGNAL(clicked()), this, SLOT(download()));
+      connect(this->ui->butDownload, &QAbstractButton::clicked, this, &WidgetBrowse::download);
 
-   connect(&this->downloadMenu, SIGNAL(download()), this, SLOT(download()));
-   connect(&this->downloadMenu, SIGNAL(downloadTo()), this, SLOT(downloadTo()));
-   connect(&this->downloadMenu, SIGNAL(downloadTo(const QString&, const Common::Hash&)), this, SLOT(downloadTo(const QString&, const Common::Hash&)));
+   connect(&this->downloadMenu, &DownloadMenu::download, this, &WidgetBrowse::download);
+   connect(&this->downloadMenu, static_cast<void (DownloadMenu::*)()>(&DownloadMenu::downloadTo), this, static_cast<void (WidgetBrowse::*)()>(&WidgetBrowse::downloadTo));
+   connect(&this->downloadMenu, static_cast<void (DownloadMenu::*)(const QString&, const Common::Hash&)>(&DownloadMenu::downloadTo), this, static_cast<void (WidgetBrowse::*)(const QString&, const Common::Hash&)>(&WidgetBrowse::downloadTo));
 
-   connect(&this->browseModel, SIGNAL(loadingResultFinished()), this, SLOT(tryToReachEntryToBrowse()));
+   connect(&this->browseModel, &BrowseModel::loadingResultFinished, this, &WidgetBrowse::tryToReachEntryToBrowse);
 
    this->setWindowTitle(QString("[%1]").arg(peerListModel.getNick(this->peerID)));
 }
@@ -131,7 +132,8 @@ void WidgetBrowse::displayContextMenuDownload(const QPoint& point)
       if (this->coreConnection->isLocal())
       {
          QMenu menu;
-         menu.addAction(QIcon(":/icons/ressources/explore_folder.png"), tr("Open location"), this, SLOT(openLocation()));
+         QAction* openLocationAction = menu.addAction(QIcon(":/icons/ressources/explore_folder.png"), tr("Open location"));
+         connect(openLocationAction, &QAction::triggered, this, &WidgetBrowse::openLocation);
          menu.exec(globalPosition);
       }
    }
@@ -184,7 +186,7 @@ void WidgetBrowse::openLocation()
    for (QListIterator<QModelIndex> i(selectedRows); i.hasNext();)
       locations.insert(this->browseModel.getPath(i.next(), true));
 
-   Utils::openLocations(locations.toList());
+   Utils::openLocations(locations.values());
 }
 
 /**
@@ -205,7 +207,7 @@ void WidgetBrowse::tryToReachEntryToBrowse()
       {
          // Then we try to match each folder name. If a folder cannot be reached then we ask to expand the last folder.
          // After the folder entries are loaded, 'tryToReachEntryToBrowse()' will be recalled via the signal 'BrowseModel::loadingResultFinished()'.
-         const QStringList& path = Common::ProtoHelper::getStr(this->remoteEntryToBrowse, &Protos::Common::Entry::path).append(Common::ProtoHelper::getStr(this->remoteEntryToBrowse, &Protos::Common::Entry::name)).split('/', QString::SkipEmptyParts);
+         const QStringList& path = Common::ProtoHelper::getStr(this->remoteEntryToBrowse, &Protos::Common::Entry::path).append(Common::ProtoHelper::getStr(this->remoteEntryToBrowse, &Protos::Common::Entry::name)).split('/', Qt::SkipEmptyParts);
          for (QStringListIterator i(path); i.hasNext();)
          {
             QModelIndex childIndex = this->browseModel.searchChild(i.next(), currentIndex);

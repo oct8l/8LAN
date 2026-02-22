@@ -21,7 +21,7 @@ using namespace LM;
 
 #if defined(Q_OS_WIN32)
    #include <fcntl.h>
-#elif defined (Q_OS_LINUX)
+#elif defined(Q_OS_UNIX)
    #include <unistd.h>
 #endif
 
@@ -49,23 +49,25 @@ void StdLogger::run()
 {
    qint64 size;
    while((size = this->stdoutIn.readLine(this->buffer, BUFFER_SIZE)) != -1)
-      this->log(QString::fromAscii(this->buffer, size), SV_DEBUG);
+      this->log(QString::fromLatin1(this->buffer, static_cast<int>(size)), SV_DEBUG);
 }
 
 StdLogger::StdLogger(int channel, const QString& name) :
    Logger(name), channel(channel)
 {
    #if defined( Q_OS_WIN32 )
-      _pipe(this->input, BUFFER_SIZE, O_TEXT);
-   #elif defined( Q_OS_LINUX )
-      pipe(this->input);
+      if (_pipe(this->input, BUFFER_SIZE, O_TEXT) != 0)
+         return;
+   #elif defined( Q_OS_UNIX )
+      if (pipe(this->input) != 0)
+         return;
    #endif
 
    //this->channel = dup(this->channel);
    dup2(this->input[1], this->channel);
    close(this->input[1]);
 
-   this->stdoutIn.open(this->input[0], QIODevice::ReadOnly);
+   (void)this->stdoutIn.open(this->input[0], QIODevice::ReadOnly);
 
    this->start();
 }

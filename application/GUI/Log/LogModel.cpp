@@ -25,10 +25,10 @@ using namespace GUI;
 LogModel::LogModel(QSharedPointer<RCC::ICoreConnection> coreConnection) :
    coreConnection(coreConnection)
 {
-   connect(this->coreConnection.data(), SIGNAL(newLogMessages(QList<QSharedPointer<LM::IEntry>>)), this, SLOT(newLogEntries(QList<QSharedPointer<LM::IEntry>>)));
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::newLogMessages, this, &LogModel::newLogEntries);
 
    this->loggerHook = LM::Builder::newLoggerHook(LM::Severity(LM::SV_FATAL_ERROR | LM::SV_ERROR | LM::SV_END_USER | LM::SV_WARNING));
-   connect(this->loggerHook.data(), SIGNAL(newLogEntry(QSharedPointer<LM::IEntry>)), this, SLOT(newLogEntry(QSharedPointer<LM::IEntry>)));
+   connect(this->loggerHook.data(), &LM::ILoggerHook::newLogEntry, this, &LogModel::newLogEntry);
 }
 
 int LogModel::rowCount(const QModelIndex& /*parent*/) const

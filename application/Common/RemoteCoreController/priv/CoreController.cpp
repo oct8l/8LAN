@@ -19,6 +19,7 @@
 #include <priv/CoreController.h>
 using namespace RCC;
 
+#include <QDir>
 #include <QProcessEnvironment>
 
 #include <priv/Log.h>
@@ -34,7 +35,7 @@ const int CoreController::TIMEOUT_SUBPROCESS_WAIT_FOR_STARTED(2000); // 2s.
 CoreController::CoreController() :
    controller(Common::Constants::SERVICE_NAME)
 {
-   connect(&this->coreProcess, SIGNAL(stateChanged(QProcess::ProcessState)), this, SIGNAL(statusChanged()));
+   connect(&this->coreProcess, &QProcess::stateChanged, this, &CoreController::statusChanged);
 }
 
 /**
@@ -66,7 +67,12 @@ void CoreController::startCore(int port)
       {
          if (this->coreProcess.state() == QProcess::NotRunning)
          {
-            this->coreProcess.start(QString("\"%1/%2\" -e%3").arg(QCoreApplication::applicationDirPath()).arg(CORE_EXE_NAME).arg(port != -1 ? QString("") : QString(" --port %1").arg(port)));
+            const QString coreProgram = QDir::toNativeSeparators(QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CORE_EXE_NAME));
+            QStringList coreArguments;
+            coreArguments << "-e";
+            if (port != -1)
+               coreArguments << "--port" << QString::number(port);
+            this->coreProcess.start(coreProgram, coreArguments);
             L_USER(QObject::tr("Core launched as subprocess"));
             this->coreProcess.waitForStarted(TIMEOUT_SUBPROCESS_WAIT_FOR_STARTED);
          }

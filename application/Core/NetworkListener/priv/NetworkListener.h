@@ -21,7 +21,9 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include <QNetworkConfigurationManager>
+#include <QSet>
+#include <QString>
+#include <QTimer>
 
 #include <Common/Uncopyable.h>
 #include <Core/FileManager/IFileManager.h>
@@ -55,6 +57,7 @@ namespace NL
 
   private slots:
       void rebindSockets();
+      void pollNetworkInterfaces();
 
    private:      
       LOG_INIT_H("NetworkListener");
@@ -64,7 +67,8 @@ namespace NL
       QSharedPointer<UM::IUploadManager> uploadManager;
       QSharedPointer<DM::IDownloadManager> downloadManager;
 
-      QNetworkConfigurationManager configManager;
+      QTimer networkPollTimer;
+      QSet<QString> networkInterfacesSnapshot;
 
       TCPListener tCPListener;
       UDPListener uDPListener;

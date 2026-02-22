@@ -19,6 +19,8 @@
 #include <Downloads/DownloadsTreeModel.h>
 using namespace GUI;
 
+#include <algorithm>
+
 #include <Common/ProtoHelper.h>
 #include <Common/Global.h>
 #include <QtGlobal>
@@ -237,7 +239,7 @@ bool DownloadsTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction acti
    if (rows.isEmpty())
       return false;
 
-   qSort(rows); // TODO: is 'getDraggedRows(..)' returns a sorted list?
+   std::sort(rows.begin(), rows.end()); // TODO: is 'getDraggedRows(..)' returns a sorted list?
 
    const int first = rows.first();
    const int last = rows.last();
@@ -329,7 +331,7 @@ void DownloadsTreeModel::onNewState(const Protos::GUI::State& state)
       }
       else
       {
-         const QStringList& path = ProtoHelper::getStr(download.local_entry(), &Protos::Common::Entry::path).split('/', QString::SkipEmptyParts);
+         const QStringList& path = ProtoHelper::getStr(download.local_entry(), &Protos::Common::Entry::path).split('/', Qt::SkipEmptyParts);
 
          // A node is created for each directory.
          Tree* currentTree = this->root;

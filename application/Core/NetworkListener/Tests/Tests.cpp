@@ -65,7 +65,7 @@ void Tests::testSending()
    NL::IChat* chat = this->networkListener->getChat();
 
    //For the next test
-   connect(chat, SIGNAL(newMessage(const Protos::Core::ChatMessage&)), this, SLOT(messageRecevied(const Protos::Core::ChatMessage&)));
+   connect(chat, &NL::IChat::newMessage, this, &Tests::messageRecevied);
 
    if (!chat->send("TEST"))
       QTest::qFail("Unable to send a chat message", "", 0);
@@ -90,7 +90,7 @@ void Tests::testReception()
  *
  * @author mcuony
  */
-void Tests::messageRecevied(const Protos::Core::ChatMessage& message)
+void Tests::messageRecevied(const Protos::GUI::EventChatMessages_Message& message)
 {
    //Do we get a test message ?  (It's important to test as QTest call this function)
    if ( QString::fromStdString(message.message()) == "TEST")

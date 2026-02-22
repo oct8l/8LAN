@@ -28,7 +28,7 @@ Thread::Thread(int lifetime, uint stackSize) :
       this->setStackSize(stackSize);
    this->timer.setInterval(lifetime);
    this->timer.setSingleShot(true);
-   connect(&this->timer, SIGNAL(timeout()), this, SIGNAL(timeout()));
+   connect(&this->timer, &QTimer::timeout, this, &Thread::timeout);
    this->start();
 }
 
@@ -57,7 +57,14 @@ void Thread::setRunnable(QWeakPointer<IRunnable> runnable)
    this->timer.stop();
 
    this->runnable = runnable;
-   this->runnable.data()->init(this);
+   QSharedPointer<IRunnable> runnableStrongRef = this->runnable.toStrongRef();
+   if (runnableStrongRef.isNull())
+   {
+      this->runnable.clear();
+      this->mutex.unlock();
+      return;
+   }
+   runnableStrongRef->init(this);
 
    this->active = true;
    this->waitCondition.wakeOne();
@@ -85,7 +92,9 @@ void Thread::run()
          return;
       this->mutex.unlock();
 
-      this->runnable.data()->run();
+      QSharedPointer<IRunnable> runnableStrongRef = this->runnable.toStrongRef();
+      if (!runnableStrongRef.isNull())
+         runnableStrongRef->run();
 
       this->mutex.lock();
       this->active = false;
@@ -130,7 +139,7 @@ ThreadPool::ThreadPool(int nbMinThread, int threadInactiveLifetime) :
   */
 ThreadPool::~ThreadPool()
 {
-   foreach (Thread* thread, this->activeThreads + this->inactiveThreads)
+   for (auto* thread : this->activeThreads + this->inactiveThreads)
       delete thread;
 }
 
@@ -152,8 +161,8 @@ void ThreadPool::run(QWeakPointer<IRunnable> runnable)
    else
    {
       thread = new Thread(this->threadInactiveLifetime, this->stackSize);
-      connect(thread, SIGNAL(runnableFinished()), this, SLOT(runnableFinished()), Qt::QueuedConnection);
-      connect(thread, SIGNAL(timeout()), this, SLOT(threadTimeout()));
+      connect(thread, &Thread::runnableFinished, this, &ThreadPool::runnableFinished, Qt::QueuedConnection);
+      connect(thread, &Thread::timeout, this, &ThreadPool::threadTimeout);
    }
    this->activeThreads << thread;
    thread->setRunnable(runnable);
@@ -181,8 +190,9 @@ void ThreadPool::runnableFinished()
    Thread* thread = static_cast<Thread*>(this->sender());
 
    // The runnable object may have been deleted right after the call to 'run()'.
-   if (!thread->getRunnable().isNull())
-      thread->getRunnable().data()->finished();
+   QSharedPointer<IRunnable> runnableStrongRef = thread->getRunnable().toStrongRef();
+   if (!runnableStrongRef.isNull())
+      runnableStrongRef->finished();
 
    this->activeThreads.removeOne(thread);
    this->inactiveThreads << thread;

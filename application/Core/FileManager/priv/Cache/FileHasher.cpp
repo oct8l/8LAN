@@ -19,6 +19,8 @@
 #include <priv/Cache/FileHasher.h>
 using namespace FM;
 
+#include <vector>
+
 #include <QMutexLocker>
 #include <QString>
 #include <QFile>
@@ -65,7 +67,7 @@ bool FileHasher::start(FileForHasher* fileCache, int n, int* amountHashed)
 
    this->currentFileCache = fileCache;
 
-   connect(this->currentFileCache->getCache(), SIGNAL(entryRemoved(Entry*)), this, SLOT(entryRemoved(Entry*)), Qt::UniqueConnection);
+   connect(this->currentFileCache->getCache(), &Cache::entryRemoved, this, &FileHasher::entryRemoved, Qt::UniqueConnection);
 
    if (this->toStopHashing)
    {
@@ -115,7 +117,7 @@ bool FileHasher::start(FileForHasher* fileCache, int n, int* amountHashed)
 #endif
 
    static const int BUFFER_SIZE = SETTINGS.get<quint32>("buffer_size_reading");
-   char buffer[BUFFER_SIZE];
+   std::vector<char> buffer(BUFFER_SIZE);
 
    Common::Hasher hasher;
    bool endOfFile = false;
@@ -152,7 +154,7 @@ bool FileHasher::start(FileForHasher* fileCache, int n, int* amountHashed)
                throw IOErrorException();
             }
 
-            bytesRead = file->read(buffer, BUFFER_SIZE);
+            bytesRead = file->read(buffer.data(), BUFFER_SIZE);
             switch (bytesRead)
             {
             case -1:
@@ -168,7 +170,7 @@ bool FileHasher::start(FileForHasher* fileCache, int n, int* amountHashed)
             }
          }
 
-         hasher.addData(buffer, bytesRead);
+         hasher.addData(buffer.data(), bytesRead);
 
          bytesReadChunk += bytesRead;
       }

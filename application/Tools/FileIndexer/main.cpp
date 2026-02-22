@@ -18,7 +18,7 @@
   
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
-#include <QtCore/QLinkedList>
+#include <QtCore/QList>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTextStream>
 #include <QtCore/QPair>
@@ -45,7 +45,7 @@ QTextStream out(stdout);
 template <typename T>
 void add(WordIndex<T>& index, const QString& word, const T& item)
 {
-   out << "Add item : " << item << " indexed by " << word << endl;
+   out << "Add item : " << item << " indexed by " << word << Qt::endl;
    index.addItem(word, item);
 }
 
@@ -65,16 +65,16 @@ void search(WordIndex<T>& index, const QString& word, int n)
 
    qint64 time = t.elapsed();
 
-   out << "Search \"" << word << "\" : " << items.count() << " items found" << endl;
-   foreach (T item, items)
-      out << " - " << item << endl;
-   out << " Time: " << double(time) / 1000 << " s" << endl;
+   out << "Search \"" << word << "\" : " << items.count() << " items found" << Qt::endl;
+   for (const auto& item : items)
+      out << " - " << item << Qt::endl;
+   out << " Time: " << double(time) / 1000 << " s" << Qt::endl;
 }
 
 template <typename T>
 void rm(WordIndex<T>& index, const QString& word, const T& item)
 {
-   out << "Remove " << item << " with word " << word << endl;
+   out << "Remove " << item << " with word " << word << Qt::endl;
    QList<QString> words;
    words.append(word);
    index.rmItem(words, item);
@@ -109,15 +109,15 @@ QString buildItem<QString>(const QFileInfo& entry)
 template <typename T>
 void buildIndex(WordIndex<T>& index, const QString& path)
 {
-   QLinkedList< QPair< QString, T > > items;
+   QList< QPair< QString, T > > items;
 
-   out << "Scanning..." << endl;
+   out << "Scanning..." << Qt::endl;
 
-   QLinkedList<QDir> dirsToVisit;
+   QList<QDir> dirsToVisit;
    dirsToVisit.append(path);
    while (!dirsToVisit.isEmpty())
    {
-      foreach (QFileInfo entry, dirsToVisit.takeFirst().entryInfoList())
+      for (const auto& entry : dirsToVisit.takeFirst().entryInfoList())
       {
          if (entry.fileName() == "." || entry.fileName() == "..")
             continue;
@@ -129,7 +129,7 @@ void buildIndex(WordIndex<T>& index, const QString& path)
       }
    }
 
-   out << "Indexing..." << endl;
+   out << "Indexing..." << Qt::endl;
    QElapsedTimer t;
    t.start();
 
@@ -140,14 +140,14 @@ void buildIndex(WordIndex<T>& index, const QString& path)
       indexFile(index, i->first, i->second);
    }
 
-   out << n << " items indexed in " << double(t.elapsed()) / 1000 << " s" << endl;
+   out << n << " items indexed in " << double(t.elapsed()) / 1000 << " s" << Qt::endl;
 }
 
 void printUsage(int argc, char *argv[])
 {
    QTextStream out(stdout);
-   out << "Usage : " << argv[0] << " <directory>*" << endl
-      << " <directory> : will scan recursively the directory and index each file and folder." << endl;
+   out << "Usage : " << argv[0] << " <directory>*" << Qt::endl
+      << " <directory> : will scan recursively the directory and index each file and folder." << Qt::endl;
 }
 
 int main(int argc, char *argv[])

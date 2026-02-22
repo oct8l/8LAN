@@ -28,7 +28,7 @@
 #include <QElapsedTimer>
 #include <QLocale>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
 
 #include <Protos/gui_protocol.pb.h>
 #include <Protos/common.pb.h>
@@ -110,7 +110,7 @@ namespace RCC
       void searchResult(const Protos::Common::FindResult& findResult);
 
    private slots:
-      void adressResolved(QHostInfo hostInfo);
+      void adressResolved(const QHostInfo& hostInfo);
       void tryToConnectToTheNextAddress();
       void stateChanged(QAbstractSocket::SocketState socketState);
 
@@ -147,7 +147,6 @@ namespace RCC
       QString password;
       quint64 salt;
 
-      MTRand mtrand;
    };
 }
 

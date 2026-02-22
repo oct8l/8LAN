@@ -37,12 +37,7 @@ using namespace NL;
 Chat::Chat(UDPListener& uDPListener) :
    uDPListener(uDPListener)
 {
-   Chat::connect(
-      &this->uDPListener,
-      SIGNAL(newChatMessage(const Common::Hash&, const Protos::Core::ChatMessage&)),
-      this,
-      SLOT(newChatMessage(const Common::Hash&, const Protos::Core::ChatMessage&))
-   );
+   Chat::connect(&this->uDPListener, &UDPListener::newChatMessage, this, &Chat::newChatMessage);
 }
 
 /**
@@ -67,7 +62,7 @@ Protos::GUI::EventChatMessages Chat::getLastMessages() const
    Protos::GUI::EventChatMessages eventMessages;
    eventMessages.mutable_message()->Reserve(this->messagesHistory.size());
 
-   for (QLinkedListIterator<Protos::GUI::EventChatMessages_Message> i(this->messagesHistory); i.hasNext();)
+   for (QListIterator<Protos::GUI::EventChatMessages_Message> i(this->messagesHistory); i.hasNext();)
       eventMessages.mutable_message()->Add()->CopyFrom(i.next());
    return eventMessages;
 }

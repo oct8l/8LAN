@@ -52,26 +52,26 @@ LOG_INIT_CPP(FileManager);
 FileManager::FileManager() :
    fileUpdater(this),
    cache(),
-   mutexPersistCache(QMutex::Recursive),
+   mutexPersistCache(),
    cacheLoading(true),
    cacheChanged(false)
 {
    Chunk::CHUNK_SIZE = SETTINGS.get<quint32>("chunk_size");
 
-   connect(&this->cache, SIGNAL(entryAdded(Entry*)),     this, SLOT(entryAdded(Entry*)),     Qt::DirectConnection);
-   connect(&this->cache, SIGNAL(entryRemoved(Entry*)),   this, SLOT(entryRemoved(Entry*)),   Qt::DirectConnection);
-   connect(&this->cache, SIGNAL(entryRenamed(Entry*, QString)),   this, SLOT(entryRenamed(Entry*, QString)),   Qt::DirectConnection);
-   connect(&this->cache, SIGNAL(chunkHashKnown(QSharedPointer<Chunk>)), this, SLOT(chunkHashKnown(QSharedPointer<Chunk>)), Qt::DirectConnection);
-   connect(&this->cache, SIGNAL(chunkRemoved(QSharedPointer<Chunk>)),   this, SLOT(chunkRemoved(QSharedPointer<Chunk>)),   Qt::DirectConnection);
+   connect(&this->cache, &Cache::entryAdded, this, &FileManager::entryAdded, Qt::DirectConnection);
+   connect(&this->cache, &Cache::entryRemoved, this, &FileManager::entryRemoved, Qt::DirectConnection);
+   connect(&this->cache, &Cache::entryRenamed, this, &FileManager::entryRenamed, Qt::DirectConnection);
+   connect(&this->cache, &Cache::chunkHashKnown, this, &FileManager::chunkHashKnown, Qt::DirectConnection);
+   connect(&this->cache, &Cache::chunkRemoved, this, &FileManager::chunkRemoved, Qt::DirectConnection);
 
-   connect(&this->cache, SIGNAL(newSharedDirectory(SharedDirectory*)),                 this, SLOT(newSharedDirectory(SharedDirectory*)),                 Qt::DirectConnection);
-   connect(&this->cache, SIGNAL(sharedDirectoryRemoved(SharedDirectory*, Directory*)), this, SLOT(sharedDirectoryRemoved(SharedDirectory*, Directory*)), Qt::DirectConnection);
+   connect(&this->cache, &Cache::newSharedDirectory, this, &FileManager::newSharedDirectory, Qt::DirectConnection);
+   connect(&this->cache, &Cache::sharedDirectoryRemoved, this, &FileManager::sharedDirectoryRemoved, Qt::DirectConnection);
 
-   connect(&this->fileUpdater, SIGNAL(fileCacheLoaded()), this, SLOT(fileCacheLoadingComplete()),  Qt::QueuedConnection);
-   connect(&this->fileUpdater, SIGNAL(deleteSharedDir(SharedDirectory*)), this, SLOT(deleteSharedDir(SharedDirectory*)),  Qt::QueuedConnection); // If the 'FileUpdater' wants to delete a shared directory.
+   connect(&this->fileUpdater, &FileUpdater::fileCacheLoaded, this, &FileManager::fileCacheLoadingComplete, Qt::QueuedConnection);
+   connect(&this->fileUpdater, &FileUpdater::deleteSharedDir, this, &FileManager::deleteSharedDir, Qt::QueuedConnection); // If the 'FileUpdater' wants to delete a shared directory.
 
    this->timerPersistCache.setInterval(SETTINGS.get<quint32>("save_cache_period"));
-   connect(&this->timerPersistCache, SIGNAL(timeout()), this, SLOT(persistCacheToFile()));
+   connect(&this->timerPersistCache, &QTimer::timeout, this, &FileManager::persistCacheToFile);
 
    this->loadCacheFromFile();
 
@@ -194,7 +194,7 @@ QList<Protos::Common::FindResult> FileManager::find(const QString& words, int ma
    findResults << Protos::Common::FindResult();
    findResults.last().set_tag(std::numeric_limits<quint64>::max()); // Worst case to compute the size (int fields have a variable size).
 
-   const int EMPTY_FIND_RESULT_SIZE = findResults.last().ByteSize();
+   const int EMPTY_FIND_RESULT_SIZE = static_cast<int>(findResults.last().ByteSizeLong());
    int findResultCurrentSize = EMPTY_FIND_RESULT_SIZE; // [Byte].
 
    for (QListIterator<NodeResult<Entry*>> i(result); i.hasNext();)
@@ -204,8 +204,8 @@ QList<Protos::Common::FindResult> FileManager::find(const QString& words, int ma
       entryLevel->set_level(entry.level);
       entry.value->populateEntry(entryLevel->mutable_entry(), true);
 
-      // We wouldn't use 'findResults.last().ByteSize()' because is too slow. Instead we call 'ByteSize()' for each entry and sum it.
-      const int entryByteSize = entryLevel->ByteSize() + 8; // Each entry take a bit of memory overhead . . . (Value found in an empiric way . . .).
+      // We wouldn't use 'findResults.last().ByteSizeLong()' because is too slow. Instead we call 'ByteSizeLong()' for each entry and sum it.
+      const int entryByteSize = static_cast<int>(entryLevel->ByteSizeLong()) + 8; // Each entry take a bit of memory overhead . . . (Value found in an empiric way . . .).
       findResultCurrentSize += entryByteSize;
 
       if (findResultCurrentSize > maxSize)
@@ -374,7 +374,7 @@ void FileManager::loadCacheFromFile()
       }
       catch (DirsNotFoundException& e)
       {
-         foreach (QString path, e.paths)
+         for (const auto& path : e.paths)
             L_WARN(QString("During the file cache loading, this directory hasn't been found : %1").arg(path));
       }
    }

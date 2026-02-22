@@ -30,7 +30,7 @@ GetChunkResult::GetChunkResult(const Protos::Core::GetChunk& chunk, QSharedPoint
 
 void GetChunkResult::start()
 {
-   connect(this->socket.data(), SIGNAL(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), this, SLOT(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), Qt::DirectConnection);
+   connect(this->socket.data(), &Common::MessageSocket::newMessage, this, &GetChunkResult::newMessage, Qt::DirectConnection);
    socket->send(Common::MessageHeader::CORE_GET_CHUNK, this->chunk);
    this->startTimer();
 }
@@ -43,7 +43,7 @@ void GetChunkResult::setStatus(bool closeTheSocket)
 void GetChunkResult::doDeleteLater()
 {
    // We must disconnect because 'this->socket->finished' can read some data and emit 'newMessage'.
-   disconnect(this->socket.data(), SIGNAL(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), this, SLOT(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)));
+   disconnect(this->socket.data(), &Common::MessageSocket::newMessage, this, &GetChunkResult::newMessage);
    this->socket->finished(this->isTimedout() ? true : this->closeTheSocket);
    this->socket.clear();
    this->deleteLater();
@@ -67,7 +67,6 @@ void GetChunkResult::newMessage(Common::MessageHeader::MessageType type, const g
    else
    {
       this->closeTheSocket = true;
-      // Segfault, maybe we cannot disconnect a signal during a call to the connected slot (this method)!?.
-      //disconnect(this->socket.data(), SIGNAL(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), this, SLOT(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)));
+      // Segfault observed when disconnecting during this slot callback; cleanup happens in doDeleteLater().
    }
 }

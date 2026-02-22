@@ -39,7 +39,7 @@ CoreConnection::CoreConnection(int socketTimeout) :
    connectingInProgress(false),
    SOCKET_TIMEOUT(socketTimeout)
 {
-   connect(&this->coreController, SIGNAL(statusChanged()), this, SIGNAL(localCoreStatusChanged()));
+   connect(&this->coreController, &CoreController::statusChanged, this, &CoreConnection::localCoreStatusChanged);
 }
 
 CoreConnection::~CoreConnection()
@@ -232,10 +232,12 @@ void CoreConnection::tempConnected()
 
    this->swap();
 
-   connect(this->current(), SIGNAL(disconnected(bool)), this, SIGNAL(disconnected(bool)));
-   connect(this->current(), SIGNAL(newState(const Protos::GUI::State&)), this, SIGNAL(newState(const Protos::GUI::State&)));
-   connect(this->current(), SIGNAL(newChatMessages(const Protos::GUI::EventChatMessages&)), this, SIGNAL(newChatMessages(const Protos::GUI::EventChatMessages&)));
-   connect(this->current(), SIGNAL(newLogMessages(QList<QSharedPointer<LM::IEntry>>)), this, SIGNAL(newLogMessages(QList<QSharedPointer<LM::IEntry>>)));
+   connect(this->current(), &InternalCoreConnection::disconnected, this, &CoreConnection::disconnected);
+   connect(this->current(), &InternalCoreConnection::newState, this, &CoreConnection::newState);
+   connect(this->current(), &InternalCoreConnection::newChatMessages, this, &CoreConnection::newChatMessages);
+   connect(this->current(), &InternalCoreConnection::newLogMessages, this, [this](const QList<QSharedPointer<LM::IEntry>>& entries) {
+      emit newLogMessages(entries);
+   });
    emit connected();
 }
 
@@ -266,9 +268,9 @@ bool CoreConnection::connectToCorePrepare(const QString& address)
       return false;
    }
 
-   connect(this->temp(), SIGNAL(connectingError(RCC::ICoreConnection::ConnectionErrorCode)), this, SLOT(tempConnectingError(RCC::ICoreConnection::ConnectionErrorCode)));
-   connect(this->temp(), SIGNAL(connected()), this, SLOT(tempConnected()));
-   connect(this->temp(), SIGNAL(disconnected(bool)), this, SLOT(tempDisconnected()));
+   connect(this->temp(), &InternalCoreConnection::connectingError, this, &CoreConnection::tempConnectingError);
+   connect(this->temp(), &InternalCoreConnection::connected, this, &CoreConnection::tempConnected);
+   connect(this->temp(), &InternalCoreConnection::disconnected, this, &CoreConnection::tempDisconnected);
 
    return true;
 }

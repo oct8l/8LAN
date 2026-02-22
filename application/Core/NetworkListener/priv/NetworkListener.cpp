@@ -19,12 +19,39 @@
 #include <priv/NetworkListener.h>
 using namespace NL;
 
+#include <QNetworkAddressEntry>
+#include <QNetworkInterface>
+
 #include <Common/LogManager/Builder.h>
 
 #include <priv/Chat.h>
 #include <priv/Search.h>
 
 LOG_INIT_CPP(NetworkListener);
+
+namespace
+{
+   QSet<QString> getActiveNetworkInterfacesSnapshot()
+   {
+      QSet<QString> interfacesSnapshot;
+      const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+      for (int i = 0; i < interfaces.size(); ++i)
+      {
+         const QNetworkInterface& interface = interfaces[i];
+         if (!(interface.flags() & QNetworkInterface::IsUp))
+            continue;
+
+         const QList<QNetworkAddressEntry> addressEntries = interface.addressEntries();
+         for (int j = 0; j < addressEntries.size(); ++j)
+         {
+            const QHostAddress ipAddress = addressEntries[j].ip();
+            if (ipAddress.protocol() == QAbstractSocket::IPv4Protocol || ipAddress.protocol() == QAbstractSocket::IPv6Protocol)
+               interfacesSnapshot.insert(interface.name() + "|" + ipAddress.toString());
+         }
+      }
+      return interfacesSnapshot;
+   }
+}
 
 NetworkListener::NetworkListener(
    QSharedPointer<FM::IFileManager> fileManager,
@@ -40,7 +67,10 @@ NetworkListener::NetworkListener(
    uDPListener(fileManager, peerManager, uploadManager, downloadManager, tCPListener.getCurrentPort()),
    chat(uDPListener)
 {
-   connect(&this->configManager, SIGNAL(configurationChanged(const QNetworkConfiguration&)), this, SLOT(rebindSockets()));
+   this->networkInterfacesSnapshot = getActiveNetworkInterfacesSnapshot();
+   this->networkPollTimer.setInterval(3000);
+   connect(&this->networkPollTimer, &QTimer::timeout, this, &NetworkListener::pollNetworkInterfaces);
+   this->networkPollTimer.start();
 }
 
 NetworkListener::~NetworkListener()
@@ -64,4 +94,14 @@ void NetworkListener::rebindSockets()
    this->peerManager->removeAllPeers();
    this->uDPListener.rebindSockets();
    this->tCPListener.rebindSockets();
+}
+
+void NetworkListener::pollNetworkInterfaces()
+{
+   const QSet<QString> currentSnapshot = getActiveNetworkInterfacesSnapshot();
+   if (currentSnapshot != this->networkInterfacesSnapshot)
+   {
+      this->networkInterfacesSnapshot = currentSnapshot;
+      this->rebindSockets();
+   }
 }

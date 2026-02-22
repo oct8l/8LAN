@@ -22,7 +22,7 @@ win32 {
       priv/FileUpdater/DirWatcherWin.h
 }
 
-unix {
+unix:!macx {
    SOURCES += priv/FileUpdater/WaitConditionLinux.cpp \
       priv/FileUpdater/DirWatcherLinux.cpp
    HEADERS += priv/FileUpdater/WaitConditionLinux.h \
@@ -31,8 +31,7 @@ unix {
 
 macx {
    SOURCES += priv/FileUpdater/WaitConditionDarwin.cpp
-   HEADERS += priv/FileUpdater/WaitConditionDarwin.h \
-      priv/FileUpdater/DirWatcherDarwin.h
+   HEADERS += priv/FileUpdater/WaitConditionDarwin.h
 }
 
 SOURCES += priv/Builder.cpp \

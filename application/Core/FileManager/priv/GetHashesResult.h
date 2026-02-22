@@ -45,10 +45,10 @@ namespace FM
       Protos::Core::GetHashesResult start();
 
    private slots:
-      void chunkHashKnown(QSharedPointer<Chunk> chunk);
+      void chunkHashKnown(const QSharedPointer<Chunk>& chunk);
 
    private:
-      void sendNextHash(QSharedPointer<Chunk> chunk);
+      void sendNextHash(const QSharedPointer<Chunk>& chunk);
 
       const Protos::Common::Entry fileEntry;
       File* file; // TODO: if the file is deleted how can we know, is it important?

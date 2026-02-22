@@ -45,7 +45,11 @@ QSize TabButton::minimumSizeHint() const
    return this->sizeHint();
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+void TabButton::enterEvent(QEnterEvent *event)
+#else
 void TabButton::enterEvent(QEvent *event)
+#endif
 {
    if (this->isEnabled())
        this->update();
@@ -63,7 +67,7 @@ void TabButton::paintEvent(QPaintEvent* pe)
 {
     QPainter p(this);
     QStyleOption opt;
-    opt.init(this);
+    opt.initFrom(this);
     opt.state |= QStyle::State_AutoRaise;
     if (isEnabled() && underMouse() && !isChecked() && !isDown())
         opt.state |= QStyle::State_Raised;
@@ -99,7 +103,7 @@ void TabButton::paintEvent(QPaintEvent* pe)
 TabCloseButton::TabCloseButton(QWidget* widget, QWidget* parent) :
    TabButton(parent), widget(widget)
 {
-   connect(this, SIGNAL(clicked()), this, SLOT(buttonClicked()));
+   connect(this, &QAbstractButton::clicked, this, &TabCloseButton::buttonClicked);
    this->setToolTipTranslate();
 }
 

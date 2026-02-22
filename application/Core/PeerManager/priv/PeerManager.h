@@ -22,7 +22,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QList>
 #include <QTcpSocket>
 
@@ -46,7 +46,7 @@ namespace PM
       PendingSocket(QTcpSocket* socket) : socket(socket) { this->t.start(); }
 
       QTcpSocket* socket;
-      QTime t;
+      QElapsedTimer t;
    };
 
    class PeerManager : public IPeerManager, Common::Uncopyable

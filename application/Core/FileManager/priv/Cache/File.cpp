@@ -83,7 +83,7 @@ File::File(
    numDataReader(0),
    fileInWriteMode(nullptr),
    fileInReadMode(nullptr),
-   mutex(QMutex::Recursive)
+   mutex()
 {
    L_DEBU(QString("New file : %1 (%2), createPhysically = %3").arg(this->getFullPath()).arg(Common::Global::formatByteSize(this->size)).arg(createPhysically));
 

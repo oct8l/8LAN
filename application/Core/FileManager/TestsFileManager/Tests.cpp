@@ -23,7 +23,7 @@ using namespace FM;
 using namespace std;
 
 #include <QtDebug>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QFile>
 #include <QTextStream>
 #include <QDataStream>
@@ -66,7 +66,7 @@ void Tests::initTestCase()
    }
    catch(Common::Global::UnableToSetTempDirException& e)
    {
-      QFAIL(e.errorMessage.toAscii().constData());
+      QFAIL(e.errorMessage.toLocal8Bit().constData());
    }
 
    Common::PersistentData::rmValue(Common::Constants::FILE_CACHE, Common::Global::DataFolderType::LOCAL); // Reset the stored cache.
@@ -445,7 +445,7 @@ void Tests::getHashesFromAFileEntry1()
    QSharedPointer<IGetHashesResult> result = this->fileManager->getHashes(entry);
 
    HashesReceiver hashesReceiver;
-   connect(result.data(), SIGNAL(nextHash(Common::Hash)), &hashesReceiver, SLOT(nextHash(Common::Hash)));
+   connect(result.data(), &FM::IGetHashesResult::nextHash, &hashesReceiver, &HashesReceiver::nextHash);
 
    Protos::Core::GetHashesResult res = result->start();
 
@@ -480,7 +480,7 @@ void Tests::getHashesFromAFileEntry2()
    QSharedPointer<IGetHashesResult> result = this->fileManager->getHashes(entry);
 
    HashesReceiver hashesReceiver;
-   connect(result.data(), SIGNAL(nextHash(Common::Hash)), &hashesReceiver, SLOT(nextHash(Common::Hash)));
+   connect(result.data(), &FM::IGetHashesResult::nextHash, &hashesReceiver, &HashesReceiver::nextHash);
    Protos::Core::GetHashesResult res = result->start(); // Should stop the computing of 'big2.bin' and switch to 'big3.bin'.
    qDebug() << res.status();
    QCOMPARE(res.status(), Protos::Core::GetHashesResult_Status_OK);
@@ -601,8 +601,8 @@ void Tests::findFilesWithResultFragmentation()
    qDebug() << "Nb fragment: " << results.size();
    for (int i = 0; i < results.size(); i++)
    {
-      qDebug() << "Fragment number " << i << ", size = " << results[i].ByteSize();
-      QVERIFY(results[i].ByteSize() <= FRAGMENT_MAX_SIZE);
+      qDebug() << "Fragment number " << i << ", size = " << results[i].ByteSizeLong();
+      QVERIFY(results[i].ByteSizeLong() <= FRAGMENT_MAX_SIZE);
       this->printSearch(terms, results[i]);
    }
 }
@@ -756,12 +756,12 @@ void Tests::compareExpectedResult(const Protos::Common::FindResult& result, cons
 
 void Tests::compareStrRegexp(const QString& regexp, const QString& str)
 {
-   QRegExp expected(regexp);
-   if (!expected.exactMatch(str))
+   const QRegularExpression expected(QRegularExpression::anchoredPattern(regexp));
+   const QRegularExpressionMatch match = expected.match(str);
+   if (!match.hasMatch())
    {
-      int l = expected.matchedLength();
+      int l = match.capturedLength(0);
       QByteArray message = QString("This string doesn't match the expected regular expression from character %1: \n%2").arg(l).arg(str).toUtf8();
       QFAIL(message.data());
    }
 }
-

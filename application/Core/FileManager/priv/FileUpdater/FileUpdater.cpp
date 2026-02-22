@@ -19,7 +19,7 @@
 #include <priv/FileUpdater/FileUpdater.h>
 using namespace FM;
 
-#include <QLinkedList>
+#include <QList>
 #include <QDir>
 #include <QElapsedTimer>
 
@@ -48,7 +48,7 @@ FileUpdater::FileUpdater(FileManager* fileManager) :
    fileCacheInformation(nullptr),
    toStop(false),
    progress(0),
-   mutex(QMutex::Recursive),
+   mutex(),
    currentScanningDir(nullptr),
    toStopHashing(false),
    remainingSizeToHash(0)
@@ -239,7 +239,7 @@ void FileUpdater::run()
 
       this->mutex.lock();
 
-      foreach (SharedDirectory* dir, this->dirsToRemove)
+      for (auto* dir : this->dirsToRemove)
       {
          L_DEBU(QString("Stop watching this directory : %1").arg(dir->getFullPath()));
          if (this->dirWatcher)
@@ -434,17 +434,17 @@ void FileUpdater::scan(Directory* dir, bool addUnfinished)
    this->currentScanningDir = dir;
    this->scanningMutex.unlock();
 
-   QLinkedList<Directory*> dirsToVisit;
+   QList<Directory*> dirsToVisit;
    dirsToVisit << dir;
 
    while (!dirsToVisit.isEmpty())
    {
       Directory* currentDir = dirsToVisit.takeFirst();
 
-      QLinkedList<Directory*> currentSubDirs = currentDir->getSubDirs();
+      QList<Directory*> currentSubDirs = currentDir->getSubDirs();
       QList<File*> currentFiles = currentDir->getCompleteFiles(); // We don't care about the unfinished files.
 
-      foreach (QFileInfo entry, QDir(currentDir->getFullPath()).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::NoSymLinks)) // TODO: Add an option to follow or not symlinks.
+      for (const auto& entry : QDir(currentDir->getFullPath()).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::NoSymLinks)) // TODO: Add an option to follow or not symlinks.
       {
          QMutexLocker locker(&this->scanningMutex);
 
@@ -514,10 +514,10 @@ void FileUpdater::scan(Directory* dir, bool addUnfinished)
       }
 
       // Deletes all the files and directories which doesn't exist on the file system.
-      foreach (File* f, currentFiles)
+      for (auto* f : currentFiles)
          this->deleteEntry(f);
 
-      foreach (Directory* d, currentSubDirs)
+      for (auto* d : currentSubDirs)
          this->deleteEntry(d);
 
       currentDir->setScanned(true);
@@ -642,7 +642,8 @@ void FileUpdater::restoreFromFileCache(SharedDirectory* dir)
    for (int i = 0; i < this->fileCacheInformation->getFileCache()->shareddir_size(); i++)
       if (this->fileCacheInformation->getFileCache()->shareddir(i).id().hash() == dir->getId())
       {
-         QSet<File*> filesWithHashes = dir->restoreFromFileCache(this->fileCacheInformation->getFileCache()->shareddir(i).root()).toSet();
+         const QList<File*> restoredFiles = dir->restoreFromFileCache(this->fileCacheInformation->getFileCache()->shareddir(i).root());
+         QSet<File*> filesWithHashes(restoredFiles.cbegin(), restoredFiles.cend());
 
          for (QMutableListIterator<File*> i(this->filesWithoutHashes); i.hasNext();)
          {
@@ -669,7 +670,7 @@ bool FileUpdater::processEvents(const QList<WatcherEvent>& events)
    if (events.isEmpty())
       return false;
 
-   foreach (WatcherEvent event, events)
+   for (const auto& event : events)
    {
       if (event.type == WatcherEvent::TIMEOUT)
          return true;

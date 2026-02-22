@@ -78,8 +78,8 @@ bool DirDownload::retrieveEntries()
    Protos::Core::GetEntries getEntries;
    getEntries.mutable_dirs()->add_entry()->CopyFrom(this->remoteEntry);
    this->getEntriesResult = this->peerSource->getEntries(getEntries);
-   connect(this->getEntriesResult.data(), SIGNAL(result(const Protos::Core::GetEntriesResult&)), this, SLOT(result(const Protos::Core::GetEntriesResult&)));
-   connect(this->getEntriesResult.data(), SIGNAL(timeout()), this, SLOT(resultTimeout()));
+   connect(this->getEntriesResult.data(), &PM::IGetEntriesResult::result, this, &DirDownload::result);
+   connect(this->getEntriesResult.data(), &PM::IGetEntriesResult::timeout, this, &DirDownload::resultTimeout);
    this->getEntriesResult->start();
 
    return true;

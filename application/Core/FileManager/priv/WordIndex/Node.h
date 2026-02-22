@@ -22,6 +22,7 @@
 #include <QList>
 #include <QSet>
 #include <QString>
+#include <QStringView>
 #include <QPair>
 
 #include <Common/Uncopyable.h>
@@ -101,7 +102,7 @@ namespace FM
         * Add an item to the node.
         * If the item already exists (using operator==) nothing is added.
         */
-      void addItem(const QStringRef& word, const T& item);
+      void addItem(QStringView word, const T& item);
 
       /**
         * Remove the item from the node.
@@ -150,7 +151,7 @@ Node<T>::~Node()
 }
 
 template <typename T>
-void Node<T>::addItem(const QStringRef& word, const T& item)
+void Node<T>::addItem(QStringView word, const T& item)
 {
    if (this->children.isEmpty())
    {
@@ -161,7 +162,7 @@ void Node<T>::addItem(const QStringRef& word, const T& item)
       for (int i = 0; i < this->children.size(); ++i)
       {
          Node<T>* child = this->children[i];
-         const int p = Common::Global::commonPrefix(word, &child->part);
+         const int p = Common::Global::commonPrefix(word, child->part);
          if (p != 0)
          {
             if (p == word.size())
@@ -181,17 +182,17 @@ void Node<T>::addItem(const QStringRef& word, const T& item)
             }
             else if (p == child->part.size()) // The sub part is the begining of the word.
             {
-               child->addItem(word.string()->midRef(word.position() + p, word.size() - p), item);
+               child->addItem(word.mid(p), item);
             }
             else
             {
                // The word and the sub part share at least one character from the begining.
-               Node<T>* newNodeSplit = new Node<T>(word.string()->mid(word.position(), p));
+               Node<T>* newNodeSplit = new Node<T>(word.left(p).toString());
                child->part.remove(0, p);
                this->children.replace(i, newNodeSplit);
                newNodeSplit->children << child;
 
-               Node<T>* newNode = new Node<T>(word.string()->mid(word.position() + p, word.size() - p), item);
+               Node<T>* newNode = new Node<T>(word.mid(p).toString(), item);
                newNodeSplit->children << newNode;
             }
             return;
@@ -283,7 +284,7 @@ QPair<Node<T>*, int> Node<T>::getNode(const QString& word, bool exactMatch) cons
    for (int i = 0; i < currentParent->children.size(); ++i)
    {
       Node<T>* child = currentParent->children[i];
-      int p = Common::Global::commonPrefix(&part, &child->part);
+      int p = Common::Global::commonPrefix(part, child->part);
 
       if (p != 0)
       {

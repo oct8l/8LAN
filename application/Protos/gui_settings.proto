@@ -1,7 +1,9 @@
 /**
   * All the GUI settings.
   */
-  
+
+syntax = "proto2";
+
 import "common.proto";
   
 package Protos.GUI;

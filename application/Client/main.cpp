@@ -19,7 +19,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include <QTextCodec>
+#include <QtGlobal>
 
 #include <Common/LogManager/Builder.h>
 
@@ -30,11 +30,8 @@
   */
 int main(int argc, char* argv[])
 {
-   QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-
    LM::Builder::setLogDirName("log_client");
 
    Client::D_LAN_Client client(argc, argv);
    return client.exec();
 }
-

@@ -20,6 +20,9 @@
 using namespace PasswordHasher;
 
 #include <QMessageBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QRegularExpression>
 #include <QStringBuilder>
 
 #include <google/protobuf/text_format.h>
@@ -45,11 +48,11 @@ MainWindow::MainWindow(QWidget *parent) :
    this->setButtonText();
    this->computeHash();
 
-   connect(this->ui->txtPass1, SIGNAL(textChanged(const QString&)), this, SLOT(computeHash()));
-   connect(this->ui->txtPass2, SIGNAL(textChanged(const QString&)), this, SLOT(computeHash()));
+   connect(this->ui->txtPass1, &QLineEdit::textChanged, this, &MainWindow::computeHash);
+   connect(this->ui->txtPass2, &QLineEdit::textChanged, this, &MainWindow::computeHash);
 
-   connect(this->ui->butSaveCurrentUser, SIGNAL(clicked()), this, SLOT(savePasswordToCurrentUser()));
-   connect(this->ui->butSaveSystemUser, SIGNAL(clicked()), this, SLOT(savePasswordToSystemUser()));
+   connect(this->ui->butSaveCurrentUser, &QPushButton::clicked, this, &MainWindow::savePasswordToCurrentUser);
+   connect(this->ui->butSaveSystemUser, &QPushButton::clicked, this, &MainWindow::savePasswordToSystemUser);
 
    this->ui->lblInstructions->setText(this->ui->lblInstructions->text().replace("{settings_path_current_user}", CORE_SETTINGS_PATH_CURRENT_USER + '/' + Common::Constants::CORE_SETTINGS_FILENAME));
    this->ui->lblInstructions->setText(this->ui->lblInstructions->text().replace("{settings_path_system_user}", CORE_SETTINGS_PATH_SYSTEM_USER + '/' + Common::Constants::CORE_SETTINGS_FILENAME));
@@ -133,11 +136,13 @@ void MainWindow::setButtonText()
   */
 QString MainWindow::checkPasswords() const
 {
+   static const QRegularExpression whitespacePattern("\\s");
+
    if (this->ui->txtPass1->text() != this->ui->txtPass2->text())
       return QString("Error: passwords aren't the same");
    else if (this->ui->txtPass1->text().isEmpty())
       return QString("Error: password is empty");
-   else if (this->ui->txtPass1->text().contains(QRegExp("\\s")))
+   else if (this->ui->txtPass1->text().contains(whitespacePattern))
       return QString("Error: password contains one or more whitespace");
    else
       return QString();

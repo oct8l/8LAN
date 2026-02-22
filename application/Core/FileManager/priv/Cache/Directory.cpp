@@ -40,7 +40,7 @@ Directory::Directory(Directory* parent, const QString& name, bool createPhysical
    subDirs(&Directory::entrySortingFun),
    files(&Directory::entrySortingFun),
    scanned(true),
-   mutex(QMutex::Recursive)
+   mutex()
 {
    QMutexLocker locker(&this->mutex);
    L_DEBU(QString("New Directory : %1, createPhysically = %2").arg(this->getFullPath()).arg(createPhysically));
@@ -59,7 +59,7 @@ Directory::Directory(Directory* parent, const QString& name, bool createPhysical
   * Called by the root (SharedDirectory) which will not have parent and name.
   */
 Directory::Directory(Cache* cache, const QString& name) :
-   Entry(cache, name), parent(0), subDirs(&Directory::entrySortingFun), files(&Directory::entrySortingFun), mutex(QMutex::Recursive)
+   Entry(cache, name), parent(0), subDirs(&Directory::entrySortingFun), files(&Directory::entrySortingFun), mutex()
 {
 }
 
@@ -69,7 +69,7 @@ Directory::~Directory()
 
    QMutexLocker locker(&this->mutex);
 
-   foreach (File* f, this->files.getList())
+   for (auto* f : this->files.getList())
       delete f;
 
    if (this->parent)
@@ -94,13 +94,13 @@ QList<File*> Directory::restoreFromFileCache(const Protos::FileCache::Hashes::Di
    {
       // Sub directories . . .
       for (int i = 0; i < dir.dir_size(); i++)
-         for (QLinkedListIterator<Directory*> d(this->subDirs.getList()); d.hasNext();)
+         for (QListIterator<Directory*> d(this->subDirs.getList()); d.hasNext();)
             ret << d.next()->restoreFromFileCache(dir.dir(i));
 
       // . . . And files.
-      QLinkedList<File*> filesNotInDir = this->files.getList();
+      QList<File*> filesNotInDir = this->files.getList();
       for (int i = 0; i < dir.file_size(); i++)
-         for (QLinkedListIterator<File*> j(this->files.getList()); j.hasNext();)
+         for (QListIterator<File*> j(this->files.getList()); j.hasNext();)
          {
             File* f = j.next();
             if (f->restoreFromFileCache(dir.file(i)) && f->hasAllHashes())
@@ -111,7 +111,7 @@ QList<File*> Directory::restoreFromFileCache(const Protos::FileCache::Hashes::Di
          }
 
       // Remove unfinished files not in 'dir'.
-      for (QLinkedListIterator<File*> i(filesNotInDir); i.hasNext();)
+      for (QListIterator<File*> i(filesNotInDir); i.hasNext();)
       {
          File* file = i.next();
          if (!file->isComplete())
@@ -127,8 +127,8 @@ QList<File*> Directory::restoreFromFileCache(const Protos::FileCache::Hashes::Di
 
 void Directory::populateHashesDir(Protos::FileCache::Hashes::Dir& dirToFill) const
 {
-   QLinkedList<Directory*> subDirsCopy;
-   QLinkedList<File*> filesCopy;
+   QList<Directory*> subDirsCopy;
+   QList<File*> filesCopy;
 
    {
       QMutexLocker locker(&this->mutex);
@@ -137,7 +137,7 @@ void Directory::populateHashesDir(Protos::FileCache::Hashes::Dir& dirToFill) con
       filesCopy = this->files.getList();
    }
 
-   for (QLinkedListIterator<File*> i(filesCopy); i.hasNext();)
+   for (QListIterator<File*> i(filesCopy); i.hasNext();)
    {
       File* f = i.next();
 
@@ -148,7 +148,7 @@ void Directory::populateHashesDir(Protos::FileCache::Hashes::Dir& dirToFill) con
       }
    }
 
-   for (QLinkedListIterator<Directory*> dir(subDirsCopy); dir.hasNext();)
+   for (QListIterator<Directory*> dir(subDirsCopy); dir.hasNext();)
    {
       dir.next()->populateHashesDir(*dirToFill.add_dir());
    }
@@ -162,7 +162,7 @@ void Directory::populateEntry(Protos::Common::Entry* dir, bool setSharedDir) con
 
    // Do not count the unfinished files.
    bool isEmpty = true;
-   for (QLinkedListIterator<File*> i(this->files.getList()); i.hasNext();)
+   for (QListIterator<File*> i(this->files.getList()); i.hasNext();)
       if (i.next()->isComplete())
       {
          isEmpty = false;
@@ -181,10 +181,10 @@ void Directory::removeUnfinishedFiles()
    QMutexLocker locker(&this->mutex);
 
    // Removes incomplete file we don't know.
-   foreach (File* f, this->files.getList())
+   for (auto* f : this->files.getList())
       f->removeUnfinishedFiles();
 
-   foreach (Directory* d, this->subDirs.getList())
+   for (auto* d : this->subDirs.getList())
       d->removeUnfinishedFiles();
 }
 
@@ -285,7 +285,7 @@ Directory* Directory::getSubDir(const QString& name) const
 {
    QMutexLocker locker(&this->mutex);
 
-   for (QLinkedListIterator<Directory*> i(this->subDirs.getList()); i.hasNext();)
+   for (QListIterator<Directory*> i(this->subDirs.getList()); i.hasNext();)
    {
       Directory* d = i.next();
       if (d->getName() == name)
@@ -295,13 +295,13 @@ Directory* Directory::getSubDir(const QString& name) const
    return 0;
 }
 
-QLinkedList<Directory*> Directory::getSubDirs() const
+QList<Directory*> Directory::getSubDirs() const
 {
    QMutexLocker locker(&this->mutex);
    return this->subDirs.getList();
 }
 
-QLinkedList<File*> Directory::getFiles() const
+QList<File*> Directory::getFiles() const
 {
    QMutexLocker locker(&this->mutex);
    return this->files.getList();
@@ -311,7 +311,7 @@ QList<File*> Directory::getCompleteFiles() const
 {
    QMutexLocker locker(&this->mutex);
    QList<File*> completeFiles;
-   foreach (File* file, this->files.getList())
+   for (auto* file : this->files.getList())
    {
       if (file->isComplete())
          completeFiles << file;
@@ -340,7 +340,7 @@ Directory* Directory::createSubDir(const QString& name, bool physically)
 Directory* Directory::createSubDirs(const QStringList& names, bool physically)
 {
    Directory* currentDir = this;
-   foreach (QString name, names)
+   for (const auto& name : names)
    {
       currentDir = currentDir->createSubDir(name, physically);
       if (!currentDir)
@@ -352,7 +352,7 @@ Directory* Directory::createSubDirs(const QStringList& names, bool physically)
 File* Directory::getFile(const QString& name) const
 {
    QMutexLocker locker(&this->mutex);
-   foreach (File* f, this->files.getList())
+   for (auto* f : this->files.getList())
       if (f->getName() == name)
          return f;
 
@@ -393,14 +393,14 @@ void Directory::stealContent(Directory* dir)
    this->subDirs.insert(dir->subDirs.getList());
    this->files.insert(dir->files.getList());
 
-   foreach (Directory* d, dir->subDirs.getList())
+   for (auto* d : dir->subDirs.getList())
    {
       d->parent = this;
       (*this) += d->getSize();
       (*dir) -= d->getSize();
    }
 
-   foreach (File* f, dir->files.getList())
+   for (auto* f : dir->files.getList())
       f->changeDirectory(this);
 
    dir->subDirs.clear();
@@ -442,7 +442,7 @@ void Directory::fileNameChanged(File* file)
 
 void Directory::deleteSubDirs()
 {
-   foreach (Directory* d, this->subDirs.getList())
+   for (auto* d : this->subDirs.getList())
       delete d;
 }
 

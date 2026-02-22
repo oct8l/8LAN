@@ -35,7 +35,7 @@ QHostAddress Utils::getCurrentAddressToListenTo()
    if (!adressToListen.isEmpty())
    {
       // Check if the address exists.
-      foreach (QHostAddress address, QNetworkInterface::allAddresses())
+      for (const auto& address : QNetworkInterface::allAddresses())
          if (address.toString() == adressToListen)
             return QHostAddress(adressToListen);
 
@@ -44,7 +44,7 @@ QHostAddress Utils::getCurrentAddressToListenTo()
 
    // Check if IPv6 is available.
    bool hasAnyIPv6 = false;
-   foreach (QHostAddress address, QNetworkInterface::allAddresses())
+   for (const auto& address : QNetworkInterface::allAddresses())
       if (address == QHostAddress::AnyIPv6 || address == QHostAddress::LocalHostIPv6)
       {
          hasAnyIPv6 = true;

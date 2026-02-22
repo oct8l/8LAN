@@ -170,7 +170,7 @@ void Tests::sortedList()
 
    auto test = [&](const QList<int>& expected) {
       int i = 0;
-      foreach (int n, list.getList())
+      for (const auto& n : list.getList())
          QCOMPARE(n, expected[i++]);
    };
 
@@ -482,7 +482,7 @@ void Tests::readAndWriteWithZeroCopyStreamQIODevice()
    file.close();
 
    QFileInfo fileInfo(filePath);
-   QCOMPARE(fileInfo.size(), static_cast<long long>(hashMessage1.ByteSize() + hashMessage2.ByteSize()));
+   QCOMPARE(fileInfo.size(), static_cast<long long>(hashMessage1.ByteSizeLong() + hashMessage2.ByteSizeLong()));
 
    hashMessage1.Clear();
    hashMessage2.Clear();
@@ -522,7 +522,7 @@ void Tests::protoHelper()
 
    Protos::GUI::CoreSettings::SharedDirectories sharedDirs;
    const QList<QString> dirs = QList<QString>() << "abc" << "def" << "ghi";
-   foreach (QString dir, dirs)
+   for (const auto& dir : dirs)
       ProtoHelper::addRepeatedStr(sharedDirs, &Protos::GUI::CoreSettings::SharedDirectories::add_dir, dir);
    for (int i = 0; i < dirs.size(); i++)
       QCOMPARE(ProtoHelper::getRepeatedStr(sharedDirs, &Protos::GUI::CoreSettings::SharedDirectories::dir, i), dirs[i]);
@@ -530,7 +530,7 @@ void Tests::protoHelper()
    for (int i = 0; i < 5; i++)
       entry.add_chunk()->set_hash(Hash::rand(i).getData(), Hash::HASH_SIZE);
    const QString debugStr = ProtoHelper::getDebugStr(entry);
-   qDebug() << endl << "The protocol buffer message (Protos::Common::Entry):" << endl << debugStr;
+   qDebug() << "\nThe protocol buffer message (Protos::Common::Entry):\n" << debugStr;
 
    QVERIFY(debugStr.indexOf("ac2f75c043fbc36709d315f2245746d8588c3ac1") != -1);
    QVERIFY(debugStr.indexOf("25eb8c48ff89cb854fc09081cc47edfc8619b214") != -1);

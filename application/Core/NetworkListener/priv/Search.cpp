@@ -49,12 +49,12 @@ quint64 Search::search(const QString& words)
 
    Protos::Core::Find findMessage;
 
-   this->tag = (static_cast<quint64>(this->mtrand.randInt()) << 32) | this->mtrand.randInt();
+   this->tag = QRandomGenerator::global()->generate64();
    findMessage.set_tag(this->tag);
 
    Common::ProtoHelper::setStr(findMessage, &Protos::Core::Find::set_pattern, words);
 
-   connect(&this->uDPListener, SIGNAL(newFindResultMessage(Protos::Common::FindResult)), this, SLOT(newFindResult(Protos::Common::FindResult)));
+   connect(&this->uDPListener, &UDPListener::newFindResultMessage, this, &Search::newFindResult);
 
    this->uDPListener.send(Common::MessageHeader::CORE_FIND, findMessage);
 

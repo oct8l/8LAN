@@ -180,8 +180,8 @@ void BrowseModel::refresh()
    });
 
    this->browseResult = this->coreConnection->browse(this->peerID, entries, true);
-   connect(this->browseResult.data(), SIGNAL(result(const google::protobuf::RepeatedPtrField<Protos::Common::Entries>&)), this, SLOT(resultRefresh(const google::protobuf::RepeatedPtrField<Protos::Common::Entries>&)));
-   connect(this->browseResult.data(), SIGNAL(timeout()), this, SLOT(resultTimeout()));
+   connect(this->browseResult.data(), &RCC::IBrowseResult::result, this, &BrowseModel::resultRefresh);
+   connect(this->browseResult.data(), &Common::Timeoutable::timeout, this, &BrowseModel::resultTimeout);
    this->browseResult->start();
 }
 
@@ -263,8 +263,8 @@ void BrowseModel::resultTimeout()
 void BrowseModel::browse(const Common::Hash& peerID, Tree* tree)
 {
    this->browseResult = tree ? this->coreConnection->browse(this->peerID, tree->getItem()) : this->coreConnection->browse(this->peerID);
-   connect(this->browseResult.data(), SIGNAL(result(const google::protobuf::RepeatedPtrField<Protos::Common::Entries>&)), this, SLOT(result(const google::protobuf::RepeatedPtrField<Protos::Common::Entries>&)));
-   connect(this->browseResult.data(), SIGNAL(timeout()), this, SLOT(resultTimeout()));
+   connect(this->browseResult.data(), &RCC::IBrowseResult::result, this, &BrowseModel::result);
+   connect(this->browseResult.data(), &Common::Timeoutable::timeout, this, &BrowseModel::resultTimeout);
    this->browseResult->start();
 }
 

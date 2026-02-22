@@ -19,6 +19,8 @@
 #include <priv/ChunkDownloader.h>
 using namespace DM;
 
+#include <vector>
+
 #include <QElapsedTimer>
 
 #include <Common/Settings.h>
@@ -47,7 +49,7 @@ ChunkDownloader::ChunkDownloader(LinkedPeers& linkedPeers, OccupiedPeers& occupi
    closeTheSocket(false),
    lastTransferStatus(QUEUED),
    mainThread(QThread::currentThread()),
-   mutex(QMutex::Recursive)
+   mutex()
 {
    L_DEBU(QString("New ChunkDownloader : %1").arg(this->chunkHash.toStr()));
 }
@@ -73,7 +75,7 @@ void ChunkDownloader::stop()
       this->downloading = false;
       this->mutex.unlock();
 
-      this->threadPool.wait(this);
+      this->threadPool.wait(this->sharedFromThis().staticCast<Common::IRunnable>().toWeakRef());
 
       this->downloadingEnded();
    }
@@ -138,7 +140,7 @@ void ChunkDownloader::run()
       static const int TIME_PERIOD_CHOOSE_ANOTHER_PEER = 1000.0 * SETTINGS.get<double>("time_recheck_chunk_factor") * SETTINGS.get<quint32>("chunk_size") / SETTINGS.get<quint32>("lan_speed");
 
       static const int BUFFER_SIZE = SETTINGS.get<quint32>("buffer_size_writing");
-      char buffer[BUFFER_SIZE];
+      std::vector<char> buffer(BUFFER_SIZE);
 
       const int initialKnownBytes = this->chunk->getKnownBytes();
       int bytesToRead = this->chunkSize - initialKnownBytes;
@@ -157,7 +159,7 @@ void ChunkDownloader::run()
          }
          this->mutex.unlock();
 
-         int bytesRead = this->socket->read(buffer + bytesToWrite, bytesToRead < BUFFER_SIZE - bytesToWrite ? bytesToRead : BUFFER_SIZE - bytesToWrite);
+         int bytesRead = this->socket->read(buffer.data() + bytesToWrite, bytesToRead < BUFFER_SIZE - bytesToWrite ? bytesToRead : BUFFER_SIZE - bytesToWrite);
          bytesToRead -= bytesRead;
 
          if (bytesRead == 0)
@@ -207,7 +209,7 @@ void ChunkDownloader::run()
          // If the buffer is full or there is no more byte to read.
          if (bytesToWrite == BUFFER_SIZE || bytesToRead == 0)
          {
-            writer->write(buffer, bytesToWrite);
+            writer->write(buffer.data(), bytesToWrite);
             bytesWritten += bytesToWrite;
             bytesToWrite = 0;
          }
@@ -421,9 +423,9 @@ PM::IPeer* ChunkDownloader::startDownloading()
    getChunkMess.mutable_chunk()->set_hash(this->chunkHash.getData(), Common::Hash::HASH_SIZE);
    getChunkMess.set_offset(this->chunk->getKnownBytes());
    this->getChunkResult = this->currentDownloadingPeer->getChunk(getChunkMess);
-   connect(this->getChunkResult.data(), SIGNAL(result(const Protos::Core::GetChunkResult&)), this, SLOT(result(const Protos::Core::GetChunkResult&)), Qt::DirectConnection);
-   connect(this->getChunkResult.data(), SIGNAL(stream(QSharedPointer<PM::ISocket>)), this, SLOT(stream(QSharedPointer<PM::ISocket>)), Qt::DirectConnection);
-   connect(this->getChunkResult.data(), SIGNAL(timeout()), this, SLOT(getChunkTimeout()), Qt::DirectConnection);
+   connect(this->getChunkResult.data(), &PM::IGetChunkResult::result, this, &ChunkDownloader::result, Qt::DirectConnection);
+   connect(this->getChunkResult.data(), &PM::IGetChunkResult::stream, this, &ChunkDownloader::stream, Qt::DirectConnection);
+   connect(this->getChunkResult.data(), &PM::IGetChunkResult::timeout, this, &ChunkDownloader::getChunkTimeout, Qt::DirectConnection);
 
    this->getChunkResult->start();
    return this->currentDownloadingPeer;
@@ -472,7 +474,7 @@ void ChunkDownloader::stream(const QSharedPointer<PM::ISocket>& socket)
    this->socket = socket;
    static const quint32 SOCKET_BUFFER_SIZE = SETTINGS.get<quint32>("socket_buffer_size");
    this->socket->setReadBufferSize(SOCKET_BUFFER_SIZE);
-   this->threadPool.run(this);
+   this->threadPool.run(this->sharedFromThis().staticCast<Common::IRunnable>().toWeakRef());
 }
 
 void ChunkDownloader::getChunkTimeout()

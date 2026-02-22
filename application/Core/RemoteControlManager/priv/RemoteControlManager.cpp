@@ -44,8 +44,8 @@ RemoteControlManager::RemoteControlManager(
    if (!okIPv4 && !okIPv6)
       L_ERRO(QString("Unable to listen on port %1").arg(PORT));
 
-   connect(&this->tcpServerIPv4, SIGNAL(newConnection()), this, SLOT(newConnection()));
-   connect(&this->tcpServerIPv6, SIGNAL(newConnection()), this, SLOT(newConnection()));
+   connect(&this->tcpServerIPv4, &QTcpServer::newConnection, this, &RemoteControlManager::newConnection);
+   connect(&this->tcpServerIPv6, &QTcpServer::newConnection, this, &RemoteControlManager::newConnection);
 
    L_DEBU(QString("Listen new remoteConnection on port %1").arg(PORT));
 }
@@ -82,9 +82,9 @@ void RemoteControlManager::newConnection()
       socket
    );
 
-   connect(remoteConnection, SIGNAL(deleted(RemoteConnection*)), this, SLOT(connectionDeleted(RemoteConnection*)), Qt::DirectConnection);
-   connect(remoteConnection, SIGNAL(chatMessageSent(const QString&)), this, SLOT(chatMessageSent(const QString&)), Qt::DirectConnection);
-   connect(remoteConnection, SIGNAL(languageDefined(QLocale)), this, SIGNAL(languageDefined(QLocale)));
+   connect(remoteConnection, &RemoteConnection::deleted, this, &RemoteControlManager::connectionDeleted, Qt::DirectConnection);
+   connect(remoteConnection, &RemoteConnection::chatMessageSent, this, &RemoteControlManager::chatMessageSent, Qt::DirectConnection);
+   connect(remoteConnection, &RemoteConnection::languageDefined, this, &RemoteControlManager::languageDefined);
    this->connections << remoteConnection;
 }
 

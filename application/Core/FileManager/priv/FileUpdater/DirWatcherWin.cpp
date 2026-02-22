@@ -34,7 +34,7 @@ using namespace FM;
   */
 
 DirWatcherWin::DirWatcherWin()
-   : mutex(QMutex::Recursive)
+   : mutex()
 {
 }
 
@@ -42,7 +42,7 @@ DirWatcherWin::~DirWatcherWin()
 {
    QMutexLocker locker(&this->mutex);
 
-   foreach (Dir* d, this->dirs)
+   for (auto* d : this->dirs)
       delete d;
 }
 

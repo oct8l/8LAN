@@ -48,7 +48,7 @@ class UnableToWatchException {};
   * Constructor.
   */
 DirWatcherLinux::DirWatcherLinux() :
-   mutex(QMutex::Recursive)
+   mutex()
 {
    // Initialize inotify
    this->initialized = true;

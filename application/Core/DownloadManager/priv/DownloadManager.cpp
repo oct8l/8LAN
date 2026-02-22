@@ -47,21 +47,21 @@ DownloadManager::DownloadManager(QSharedPointer<FM::IFileManager> fileManager, Q
 {
    this->threadPool.setStackSize(MIN_DOWNLOAD_THREAD_STACK_SIZE + SETTINGS.get<quint32>("buffer_size_writing"));
 
-   connect(&this->occupiedPeersAskingForHashes, SIGNAL(newFreePeer(PM::IPeer*)), this, SLOT(peerNoLongerAskingForHashes(PM::IPeer*)));
-   connect(&this->occupiedPeersAskingForEntries, SIGNAL(newFreePeer(PM::IPeer*)), this, SLOT(peerNoLongerAskingForEntries(PM::IPeer*)));
-   connect(&this->occupiedPeersDownloadingChunk, SIGNAL(newFreePeer(PM::IPeer*)), this, SLOT(peerNoLongerDownloadingChunk(PM::IPeer*)));
+   connect(&this->occupiedPeersAskingForHashes, &OccupiedPeers::newFreePeer, this, &DownloadManager::peerNoLongerAskingForHashes);
+   connect(&this->occupiedPeersAskingForEntries, &OccupiedPeers::newFreePeer, this, &DownloadManager::peerNoLongerAskingForEntries);
+   connect(&this->occupiedPeersDownloadingChunk, &OccupiedPeers::newFreePeer, this, &DownloadManager::peerNoLongerDownloadingChunk);
 
    // We wait the cache is loaded before loading the downloads queue.
-   connect(this->fileManager.data(), SIGNAL(fileCacheLoaded()), this, SLOT(fileCacheLoaded()));
+   connect(this->fileManager.data(), &FM::IFileManager::fileCacheLoaded, this, &DownloadManager::fileCacheLoaded);
 
    this->startErroneousDownloadTimer.setInterval(RESTART_DOWNLOADS_PERIOD_IF_ERROR);
    this->startErroneousDownloadTimer.setSingleShot(true);
-   connect(&this->startErroneousDownloadTimer, SIGNAL(timeout()), this, SLOT(restartErroneousDownloads()));
+   connect(&this->startErroneousDownloadTimer, &QTimer::timeout, this, &DownloadManager::restartErroneousDownloads);
 
    this->saveTimer.setInterval(SETTINGS.get<quint32>("save_queue_period"));
-   connect(&this->saveTimer, SIGNAL(timeout()), this, SLOT(saveQueueToFile()));
+   connect(&this->saveTimer, &QTimer::timeout, this, &DownloadManager::saveQueueToFile);
 
-   connect(this->peerManager.data(), SIGNAL(peerBecomesAvailable(PM::IPeer*)), this, SLOT(peerBecomesAvailable(PM::IPeer*)));
+   connect(this->peerManager.data(), &PM::IPeerManager::peerBecomesAvailable, this, &DownloadManager::peerBecomesAvailable);
 }
 
 DownloadManager::~DownloadManager()
@@ -156,7 +156,7 @@ Download* DownloadManager::addDownload(const Protos::Common::Entry& remoteEntry,
             localEntry
          );
          newDownload = dirDownload;
-         connect(dirDownload, SIGNAL(newEntries(const Protos::Common::Entries&)), this, SLOT(newEntries(const Protos::Common::Entries&)), Qt::DirectConnection);
+         connect(dirDownload, &DirDownload::newEntries, this, &DownloadManager::newEntries, Qt::DirectConnection);
       }
       break;
 
@@ -175,7 +175,7 @@ Download* DownloadManager::addDownload(const Protos::Common::Entry& remoteEntry,
             status
          );
          newDownload = fileDownload;
-         connect(fileDownload, SIGNAL(newHashKnown()), this, SLOT(setQueueChanged()), Qt::DirectConnection);
+         connect(fileDownload, &FileDownload::newHashKnown, this, &DownloadManager::setQueueChanged, Qt::DirectConnection);
       }
       break;
 
@@ -183,7 +183,7 @@ Download* DownloadManager::addDownload(const Protos::Common::Entry& remoteEntry,
       return 0;
    }
 
-   connect(newDownload, SIGNAL(becomeErroneous(Download*)), this, SLOT(downloadStatusBecomeErroneous(Download*)));
+   connect(newDownload, &Download::becomeErroneous, this, &DownloadManager::downloadStatusBecomeErroneous);
    this->downloadQueue.insert(position, newDownload);
    newDownload->start();
 
@@ -364,7 +364,8 @@ void DownloadManager::scanTheQueue()
    FileDownload* fileDownload = nullptr;
 
    // To know the number of peers not occupied that own at least one chunk in the queue.
-   QSet<PM::IPeer*> linkedPeersNotOccupied = this->linkedPeers.getPeers().toSet();
+   const QList<PM::IPeer*> linkedPeers = this->linkedPeers.getPeers();
+   QSet<PM::IPeer*> linkedPeersNotOccupied(linkedPeers.cbegin(), linkedPeers.cend());
    linkedPeersNotOccupied -= this->occupiedPeersDownloadingChunk.getOccupiedPeers();
 
    DownloadQueue::ScanningIterator<IsDownloable> i(this->downloadQueue);
@@ -385,7 +386,7 @@ void DownloadManager::scanTheQueue()
 
       if (PM::IPeer* currentPeer = chunkDownloader->startDownloading())
       {
-         connect(chunkDownloader.data(), SIGNAL(downloadFinished()), this, SLOT(chunkDownloaderFinished()), Qt::DirectConnection);
+         connect(chunkDownloader.data(), &ChunkDownloader::downloadFinished, this, &DownloadManager::chunkDownloaderFinished, Qt::DirectConnection);
          linkedPeersNotOccupied -= currentPeer;
          this->numberOfDownloadThreadRunning++;
          numberOfDownloadThreadRunningCopy = this->numberOfDownloadThreadRunning;
@@ -418,7 +419,8 @@ void DownloadManager::restartErroneousDownloads()
 void DownloadManager::chunkDownloaderFinished()
 {
    L_DEBU(QString("DownloadManager::chunkDownloaderFinished, numberOfDownloadThreadRunning = %1").arg(this->numberOfDownloadThreadRunning));
-   this->sender()->disconnect(this, SLOT(chunkDownloaderFinished()));
+   if (ChunkDownloader* chunkDownloader = qobject_cast<ChunkDownloader*>(this->sender()))
+      disconnect(chunkDownloader, &ChunkDownloader::downloadFinished, this, &DownloadManager::chunkDownloaderFinished);
    this->numberOfDownloadThreadRunning--;
 }
 

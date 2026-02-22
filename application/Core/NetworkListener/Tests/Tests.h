@@ -45,7 +45,7 @@ private slots:
    void initTestCase();
    void testSending();
    void testReception();
-   void messageRecevied(const Protos::Core::ChatMessage& message);
+   void messageRecevied(const Protos::GUI::EventChatMessages_Message& message);
 
 
 private :

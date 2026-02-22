@@ -19,6 +19,8 @@
 #include <PeerList/PeerListModel.h>
 using namespace GUI;
 
+#include <algorithm>
+
 #include <QtAlgorithms>
 #include <QStringBuilder>
 #include <QSet>
@@ -55,12 +57,12 @@ PeerListModel::PeerListModel(QSharedPointer<RCC::ICoreConnection> coreConnection
    coreConnection(coreConnection),
    currentSortType(Protos::GUI::Settings::BY_SHARING_AMOUNT)
 {
-   connect(this->coreConnection.data(), SIGNAL(newState(Protos::GUI::State)), this, SLOT(newState(Protos::GUI::State)));
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::newState, this, &PeerListModel::newState);
 }
 
 PeerListModel::~PeerListModel()
 {
-   foreach (Peer* p, this->orderedPeers)
+   for (auto* p : this->orderedPeers)
       delete p;
 }
 
@@ -157,7 +159,7 @@ QVariant PeerListModel::data(const QModelIndex& index, int role) const
       return QVariant();
 
    case Qt::TextAlignmentRole:
-      return (index.column() == 2 ? Qt::AlignRight : Qt::AlignLeft) + Qt::AlignVCenter;
+      return static_cast<int>((index.column() == 2 ? Qt::AlignRight : Qt::AlignLeft) | Qt::AlignVCenter);
 
    case Qt::ToolTipRole:
       {
@@ -308,7 +310,7 @@ void PeerListModel::updatePeers(const google::protobuf::RepeatedPtrField<Protos:
 void PeerListModel::sort()
 {
    emit layoutAboutToBeChanged();
-   qSort(this->orderedPeers.begin(), this->orderedPeers.end(), this->currentSortType == Protos::GUI::Settings::BY_NICK ? Peer::sortCompByNick : Peer::sortCompBySharingAmount);
+   std::sort(this->orderedPeers.begin(), this->orderedPeers.end(), this->currentSortType == Protos::GUI::Settings::BY_NICK ? Peer::sortCompByNick : Peer::sortCompBySharingAmount);
    emit layoutChanged();
 }
 

@@ -19,6 +19,7 @@
 #include <TableLogModel.h>
 
 #include <QTextStream>
+#include <QTimer>
 
 #include <Common/LogManager/Builder.h>
 #include <Common/LogManager/Exceptions.h>
@@ -33,7 +34,7 @@ TableLogModel::TableLogModel() :
    source(0)
 {
    this->timer.setInterval(500);
-   connect(&this->timer, SIGNAL(timeout()), this, SLOT(fileChanged()));
+   connect(&this->timer, &QTimer::timeout, this, &TableLogModel::fileChanged);
 }
 
 int TableLogModel::rowCount(const QModelIndex& parent) const
@@ -163,7 +164,9 @@ void TableLogModel::readLines()
       return;
 
    QTextStream stream(this->source);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
    stream.setCodec("UTF-8");
+#endif
 
    int count = this->entries.count();
 

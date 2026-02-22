@@ -64,7 +64,7 @@ static void qtServiceCloseDebugLog()
     if (!f)
         return;
     QString ps(QTime::currentTime().toString("HH:mm:ss.zzz ") + QLatin1String("--- DEBUG LOG CLOSED ---\n\n"));
-    f->write(ps.toAscii());
+    f->write(ps.toLatin1());
     f->flush();
     f->close();
     delete f;
@@ -95,7 +95,7 @@ void qtServiceLogDebug(QtMsgType type, const char* msg)
             return;
         }
         QString ps(QLatin1String("\n") + s + QLatin1String("--- DEBUG LOG OPENED ---\n"));
-        f->write(ps.toAscii());
+        f->write(ps.toLatin1());
     }
 
     switch (type) {
@@ -119,7 +119,7 @@ void qtServiceLogDebug(QtMsgType type, const char* msg)
     s += msg;
     s += QLatin1String("\n");
 
-    f->write(s.toAscii());
+    f->write(s.toLatin1());
     f->flush();
 
     if (type == QtFatalMsg) {
@@ -421,7 +421,7 @@ private:
 QtServiceBase *QtServiceBasePrivate::instance = 0;
 
 QtServiceBasePrivate::QtServiceBasePrivate(const QString &name)
-    : startupType(QtServiceController::ManualStartup), serviceFlags(0), controller(name)
+    : startupType(QtServiceController::ManualStartup), serviceFlags(), controller(name)
 {
 
 }
@@ -644,7 +644,7 @@ QtServiceBase::QtServiceBase(int argc, char **argv, const QString &name)
     d_ptr = new QtServiceBasePrivate(nm);
     d_ptr->q_ptr = this;
 
-    d_ptr->serviceFlags = 0;
+    d_ptr->serviceFlags = QtServiceBase::ServiceFlags();
     d_ptr->sysd = 0;
     for (int i = 0; i < argc; ++i)
         d_ptr->args.append(QString::fromLocal8Bit(argv[i]));
@@ -1106,6 +1106,4 @@ void QtServiceBase::processCommand(int /*code*/)
 
     \reimp
 */
-
-
 

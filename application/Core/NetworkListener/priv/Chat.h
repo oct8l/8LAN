@@ -20,7 +20,7 @@
 #define NETWORKLISTENER_CHAT_H
 
 #include <QSharedPointer>
-#include <QLinkedList>
+#include <QList>
 
 #include <Protos/core_protocol.pb.h>
 #include <Protos/gui_protocol.pb.h>
@@ -45,7 +45,7 @@ namespace NL
       void newChatMessage(const Common::Hash&, const Protos::Core::ChatMessage&);
 
    private:
-      QLinkedList<Protos::GUI::EventChatMessages_Message> messagesHistory; ///< The last messages. The first is the older.
+      QList<Protos::GUI::EventChatMessages_Message> messagesHistory; ///< The last messages. The first is the older.
 
       UDPListener& uDPListener;
    };

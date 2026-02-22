@@ -39,6 +39,8 @@ namespace GUI
       class Peer;
 
    public:
+      using QAbstractTableModel::sort;
+
       PeerListModel(QSharedPointer<RCC::ICoreConnection> coreConnection);
       ~PeerListModel();
 

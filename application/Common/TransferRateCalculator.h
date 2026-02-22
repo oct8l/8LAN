@@ -43,7 +43,7 @@ namespace Common
       void reset();
       void update(int value);
 
-      mutable QMutex mutex;
+      mutable QRecursiveMutex mutex;
       QElapsedTimer timer;
       qint64 t1;
 

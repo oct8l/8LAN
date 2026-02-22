@@ -87,22 +87,22 @@ RemoteConnection::RemoteConnection(
 
    this->sendLogMessagesTimer.setInterval(SETTINGS.get<quint32>("delay_before_sending_log_messages"));
    this->sendLogMessagesTimer.setSingleShot(true);
-   connect(&this->sendLogMessagesTimer, SIGNAL(timeout()), this, SLOT(sendLogMessages()));
+   connect(&this->sendLogMessagesTimer, &QTimer::timeout, this, &RemoteConnection::sendLogMessages);
 
    this->timerRefresh.setInterval(SETTINGS.get<quint32>("remote_refresh_rate"));
    this->timerRefresh.setSingleShot(true);
-   connect(&this->timerRefresh, SIGNAL(timeout()), this, SLOT(refresh()));
+   connect(&this->timerRefresh, &QTimer::timeout, this, &RemoteConnection::refresh);
 
    this->timerCloseSocket.setInterval(MAX_DELAY_WAITING_AUTH_RES);
    this->timerCloseSocket.setSingleShot(true);
-   connect(&this->timerCloseSocket, SIGNAL(timeout()), this, SLOT(closeSocket()));
+   connect(&this->timerCloseSocket, &QTimer::timeout, this, &RemoteConnection::closeSocket);
 
-   connect(&this->networkListener->getChat(), SIGNAL(newMessage(const Protos::GUI::EventChatMessages_Message&)), this, SLOT(newChatMessage(const Protos::GUI::EventChatMessages_Message&)));
+   connect(&this->networkListener->getChat(), &NL::IChat::newMessage, this, &RemoteConnection::newChatMessage);
 
    this->loggerHook = LM::Builder::newLoggerHook(LM::Severity(LM::SV_FATAL_ERROR | LM::SV_ERROR | LM::SV_END_USER | LM::SV_WARNING));
 
    qRegisterMetaType<QSharedPointer<LM::IEntry>>("QSharedPointer<LM::IEntry>");
-   connect(this->loggerHook.data(), SIGNAL(newLogEntry(QSharedPointer<LM::IEntry>)), this, SLOT(newLogEntry(QSharedPointer<LM::IEntry>)), Qt::QueuedConnection);
+   connect(this->loggerHook.data(), &LM::ILoggerHook::newLogEntry, this, &RemoteConnection::newLogEntry, Qt::QueuedConnection);
 
    this->askForAuthentication();
 }
@@ -349,7 +349,7 @@ void RemoteConnection::askForAuthentication()
    Protos::GUI::AskForAuthentication askForAuthenticationMessage;
    askForAuthenticationMessage.set_salt(SETTINGS.get<quint64>("salt"));
 
-   this->saltChallenge = (static_cast<quint64>(this->mtrand.randInt()) << 32) | this->mtrand.randInt();
+   this->saltChallenge = QRandomGenerator::global()->generate64();
    askForAuthenticationMessage.set_salt_challenge(this->saltChallenge);
 
    this->timerCloseSocket.start();
@@ -399,12 +399,12 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
 
             if (currentPassword.isNull())
             {
-               QTimer::singleShot(SETTINGS.get<quint32>("delay_gui_connection_fail"), this, SLOT(sendNoPasswordDefinedResult()));
+               QTimer::singleShot(SETTINGS.get<quint32>("delay_gui_connection_fail"), this, &RemoteConnection::sendNoPasswordDefinedResult);
                break;
             }
             else if (passwordReceived != Common::Hasher::hashWithSalt(currentPassword, this->saltChallenge))
             {
-               QTimer::singleShot(SETTINGS.get<quint32>("delay_gui_connection_fail"), this, SLOT(sendBadPasswordResult()));
+               QTimer::singleShot(SETTINGS.get<quint32>("delay_gui_connection_fail"), this, &RemoteConnection::sendBadPasswordResult);
                break;
             }
          }
@@ -468,7 +468,7 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
          }
          catch(FM::DirsNotFoundException& e)
          {
-            foreach (QString path, e.paths)
+            for (const auto& path : e.paths)
                L_WARN(QString("Directory not found : %1").arg(path));
          }
 
@@ -501,7 +501,7 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
          {
             QList<Protos::Common::FindResult> results = this->fileManager->find(pattern, SETTINGS.get<quint32>("max_number_of_result_shown"), std::numeric_limits<int>::max());
 
-            const quint64 tag = (static_cast<quint64>(this->mtrand.randInt()) << 32) | this->mtrand.randInt();
+            const quint64 tag = QRandomGenerator::global()->generate64();
             Protos::GUI::Tag tagMess;
             tagMess.set_tag(tag);
             this->send(Common::MessageHeader::GUI_SEARCH_TAG, tagMess);
@@ -517,7 +517,7 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
          else
          {
             QSharedPointer<NL::ISearch> search = this->networkListener->newSearch();
-            connect(search.data(), SIGNAL(found(const Protos::Common::FindResult&)), this, SLOT(searchFound(const Protos::Common::FindResult&)));
+            connect(search.data(), &NL::ISearch::found, this, &RemoteConnection::searchFound);
             this->currentSearches << search;
             const quint64 tag = search->search(pattern);
 
@@ -535,7 +535,7 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
          Common::Hash peerID(browseMessage.peer_id().hash());
          PM::IPeer* peer = this->peerManager->getPeer(peerID);
 
-         quint64 tag = (static_cast<quint64>(this->mtrand.randInt()) << 32) | this->mtrand.randInt();
+         quint64 tag = QRandomGenerator::global()->generate64();
          Protos::GUI::Tag tagMess;
          tagMess.set_tag(tag);
          this->send(Common::MessageHeader::GUI_BROWSE_TAG, tagMess);
@@ -547,8 +547,8 @@ void RemoteConnection::onNewMessage(Common::MessageHeader::MessageType type, con
             getEntries.set_get_roots(browseMessage.get_roots());
             QSharedPointer<PM::IGetEntriesResult> entries = peer->getEntries(getEntries);
             entries->setProperty("tag", tag);
-            connect(entries.data(), SIGNAL(result(const Protos::Core::GetEntriesResult&)), this, SLOT(getEntriesResult(const Protos::Core::GetEntriesResult&)));
-            connect(entries.data(), SIGNAL(timeout()), this, SLOT(getEntriesTimeout()));
+            connect(entries.data(), &PM::IGetEntriesResult::result, this, &RemoteConnection::getEntriesResult);
+            connect(entries.data(), &PM::IGetEntriesResult::timeout, this, &RemoteConnection::getEntriesTimeout);
             entries->start();
             this->getEntriesResults << entries;
          }

@@ -89,7 +89,7 @@ void InternalCoreConnection::connectToCore(const QString& address, quint16 port,
    if (this->currentHostLookupID != -1)
       QHostInfo::abortHostLookup(this->currentHostLookupID);
 
-   this->currentHostLookupID = QHostInfo::lookupHost(this->connectionInfo.address, this, SLOT(adressResolved(QHostInfo)));
+   this->currentHostLookupID = QHostInfo::lookupHost(this->connectionInfo.address, this, &InternalCoreConnection::adressResolved);
 }
 
 void InternalCoreConnection::connectToCore(const QString& address, quint16 port, const QString& password)
@@ -134,7 +134,7 @@ bool InternalCoreConnection::setCorePassword(const QString& newPassword, const Q
 {
    Protos::GUI::ChangePassword passMess;
 
-   const quint64 newSalt = static_cast<quint64>(mtrand.randInt()) << 32 | mtrand.randInt();
+   const quint64 newSalt = QRandomGenerator::global()->generate64();
    Common::Hash newPasswordHashed = Common::Hasher::hashWithSalt(newPassword, newSalt);
 
    passMess.mutable_new_password()->set_hash(newPasswordHashed.getData(), Common::Hash::HASH_SIZE);
@@ -271,7 +271,7 @@ ICoreConnection::ConnectionInfo InternalCoreConnection::getConnectionInfo() cons
    return this->connectionInfo;
 }
 
-void InternalCoreConnection::adressResolved(QHostInfo hostInfo)
+void InternalCoreConnection::adressResolved(const QHostInfo& hostInfo)
 {
    this->currentHostLookupID = -1;
 
@@ -317,7 +317,7 @@ void InternalCoreConnection::tryToConnectToTheNextAddress()
          L_WARN("Unable to start the Core");
    }
 
-   connect(this->socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(stateChanged(QAbstractSocket::SocketState)));
+   connect(this->socket, &QAbstractSocket::stateChanged, this, &InternalCoreConnection::stateChanged);
    this->socket->connectToHost(address, this->connectionInfo.port);
    this->addressesToRetry << address;
 }
@@ -327,7 +327,7 @@ void InternalCoreConnection::stateChanged(QAbstractSocket::SocketState socketSta
    switch (socketState)
    {
    case QAbstractSocket::UnconnectedState:
-      disconnect(this->socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(stateChanged(QAbstractSocket::SocketState)));
+      disconnect(this->socket, &QAbstractSocket::stateChanged, this, &InternalCoreConnection::stateChanged);
       if (!this->addressesToTry.isEmpty())
       {
          this->tryToConnectToTheNextAddress();
@@ -336,7 +336,7 @@ void InternalCoreConnection::stateChanged(QAbstractSocket::SocketState socketSta
       {
          this->addressesToTry = this->addressesToRetry;
          this->addressesToRetry.clear();
-         QTimer::singleShot(TIME_BETWEEN_RETRIES, this, SLOT(tryToConnectToTheNextAddress()));
+         QTimer::singleShot(TIME_BETWEEN_RETRIES, this, &InternalCoreConnection::tryToConnectToTheNextAddress);
       }
       else
       {
@@ -345,7 +345,7 @@ void InternalCoreConnection::stateChanged(QAbstractSocket::SocketState socketSta
       break;
 
    case QAbstractSocket::ConnectedState:
-      disconnect(this->socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(stateChanged(QAbstractSocket::SocketState)));
+      disconnect(this->socket, &QAbstractSocket::stateChanged, this, &InternalCoreConnection::stateChanged);
       // Now we wait a message 'Protos.GUI.AskForAuthentication' from the Core before being authenticated.
 
    default:;
@@ -470,10 +470,10 @@ void InternalCoreConnection::onNewMessage(Common::MessageHeader::MessageType typ
 
          while (!this->searchResultsWithoutTag.isEmpty())
          {
-            QWeakPointer<SearchResult> searchResult = this->searchResultsWithoutTag.takeFirst();
+            const QSharedPointer<SearchResult> searchResult = this->searchResultsWithoutTag.takeFirst().toStrongRef();
             if (!searchResult.isNull())
             {
-               searchResult.data()->setTag(tagMessage.tag());
+               searchResult->setTag(tagMessage.tag());
                break;
             }
          }
@@ -494,10 +494,10 @@ void InternalCoreConnection::onNewMessage(Common::MessageHeader::MessageType typ
 
          while (!this->browseResultsWithoutTag.isEmpty())
          {
-            QWeakPointer<BrowseResult> browseResult = this->browseResultsWithoutTag.takeFirst();
+            const QSharedPointer<BrowseResult> browseResult = this->browseResultsWithoutTag.takeFirst().toStrongRef();
             if (!browseResult.isNull())
             {
-               browseResult.data()->setTag(tagMessage.tag());
+               browseResult->setTag(tagMessage.tag());
                break;
             }
          }

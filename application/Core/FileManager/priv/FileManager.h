@@ -108,7 +108,7 @@ namespace FM
       WordIndex<Entry*> wordIndex; ///< The word index.
 
       QTimer timerPersistCache;
-      QMutex mutexPersistCache;
+      QRecursiveMutex mutexPersistCache;
       QMutex mutexCacheChanged; ///< We use a second mutex (instead of using 'mutexPersistCache') to avoid deadlock created by "File -> chunkHashKnown()" and "persistCacheToFile() -> File".
       bool cacheLoading; ///< Set to 'true' during cache loading. It avoids to persist the cache during loading.
       bool cacheChanged;

@@ -32,8 +32,6 @@ using namespace DM;
 #include <priv/Log.h>
 #include <priv/Constants.h>
 
-MTRand FileDownload::mtrand;
-
 FileDownload::FileDownload(
    QSharedPointer<FM::IFileManager> fileManager,
    LinkedPeers& linkedPeers,
@@ -178,7 +176,10 @@ QSet<PM::IPeer*> FileDownload::getPeers() const
 {
    QSet<PM::IPeer*> peers;
    for (QListIterator<QSharedPointer<ChunkDownloader>> i(this->chunkDownloaders); i.hasNext();)
-      peers += i.next()->getPeers().toSet();
+   {
+      const QList<PM::IPeer*> chunkPeers = i.next()->getPeers();
+      peers.unite(QSet<PM::IPeer*>(chunkPeers.cbegin(), chunkPeers.cend()));
+   }
    return peers;
 }
 
@@ -229,7 +230,7 @@ QSharedPointer<ChunkDownloader> FileDownload::getAChunkToDownload()
       return QSharedPointer<ChunkDownloader>();
 
    // If there is many chunk with the same number of peer we choose randomly one of them.
-   QSharedPointer<ChunkDownloader> chunkDownloader = chunksReadyToDownload.size() == 1 ? chunksReadyToDownload.first() : chunksReadyToDownload[mtrand.randInt(chunksReadyToDownload.size() - 1)];
+   QSharedPointer<ChunkDownloader> chunkDownloader = chunksReadyToDownload.size() == 1 ? chunksReadyToDownload.first() : chunksReadyToDownload[QRandomGenerator::global()->bounded(chunksReadyToDownload.size())];
 
    if (!this->localEntry.exists())
    {
@@ -321,9 +322,9 @@ bool FileDownload::retrieveHashes()
    this->setStatus(GETTING_THE_HASHES);
 
    this->getHashesResult = this->peerSource->getHashes(this->remoteEntry);
-   connect(this->getHashesResult.data(), SIGNAL(result(const Protos::Core::GetHashesResult&)), this, SLOT(result(const Protos::Core::GetHashesResult&)));
-   connect(this->getHashesResult.data(), SIGNAL(nextHash(const Common::Hash&)), this, SLOT(nextHash(const Common::Hash&)));
-   connect(this->getHashesResult.data(), SIGNAL(timeout()), this, SLOT(getHashTimeout()));
+   connect(this->getHashesResult.data(), &PM::IGetHashesResult::result, this, &FileDownload::result);
+   connect(this->getHashesResult.data(), &PM::IGetHashesResult::nextHash, this, &FileDownload::nextHash);
+   connect(this->getHashesResult.data(), &PM::IGetHashesResult::timeout, this, &FileDownload::getHashTimeout);
    this->getHashesResult->start();
 
    return true;
@@ -512,9 +513,9 @@ bool FileDownload::tryToLinkToAnExistingFile()
 
 void FileDownload::connectChunkDownloaderSignals(const QSharedPointer<ChunkDownloader>& chunkDownloader)
 {
-   connect(chunkDownloader.data(), SIGNAL(downloadStarted()), this, SLOT(chunkDownloaderStarted()), Qt::DirectConnection);
-   connect(chunkDownloader.data(), SIGNAL(downloadFinished()), this, SLOT(chunkDownloaderFinished()), Qt::DirectConnection);
-   connect(chunkDownloader.data(), SIGNAL(numberOfPeersChanged()), this, SLOT(updateStatus()), Qt::DirectConnection);
+   connect(chunkDownloader.data(), &ChunkDownloader::downloadStarted, this, &FileDownload::chunkDownloaderStarted, Qt::DirectConnection);
+   connect(chunkDownloader.data(), &ChunkDownloader::downloadFinished, this, &FileDownload::chunkDownloaderFinished, Qt::DirectConnection);
+   connect(chunkDownloader.data(), &ChunkDownloader::numberOfPeersChanged, this, &FileDownload::updateStatus, Qt::DirectConnection);
 }
 
 /**

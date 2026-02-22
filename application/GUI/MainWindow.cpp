@@ -23,6 +23,9 @@ using namespace GUI;
 #include <cmath>
 
 #include <QTabBar>
+#include <QAction>
+#include <QActionGroup>
+#include <QAbstractButton>
 #include <QClipboard>
 #include <QStringBuilder>
 #include <QMdiSubWindow>
@@ -75,25 +78,35 @@ MainWindow::MainWindow(QSharedPointer<RCC::ICoreConnection> coreConnection, QWid
    this->mdiAreaTabBar = this->ui->mdiArea->findChild<QTabBar*>();
    this->mdiAreaTabBar->setMovable(true);
    this->mdiAreaTabBar->installEventFilter(this);
-   connect(this->mdiAreaTabBar, SIGNAL(tabMoved(int, int)), this, SLOT(tabMoved(int, int)));
+   connect(this->mdiAreaTabBar, &QTabBar::tabMoved, this, &MainWindow::tabMoved);
 
    StatusBar* statusBar = new StatusBar(this->coreConnection);
    ui->statusBar->addWidget(statusBar, 1);
-   connect(statusBar, SIGNAL(showDockLog(bool)), this->ui->dockLog, SLOT(setVisible(bool)));
-   connect(statusBar, SIGNAL(downloadClicked()), this, SLOT(showDownloads()));
-   connect(statusBar, SIGNAL(uploadClicked()), this, SLOT(showUploads()));
+   connect(statusBar, &StatusBar::showDockLog, this->ui->dockLog, &QWidget::setVisible);
+   connect(statusBar, &StatusBar::downloadClicked, this, &MainWindow::showDownloads);
+   connect(statusBar, &StatusBar::uploadClicked, this, &MainWindow::showUploads);
 
    this->ui->tblPeers->setModel(&this->peerListModel);
 
    this->ui->tblPeers->setItemDelegate(&this->peerListDelegate);
-   this->ui->tblPeers->horizontalHeader()->setResizeMode(0, QHeaderView::ResizeToContents);
-   this->ui->tblPeers->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-   this->ui->tblPeers->horizontalHeader()->setResizeMode(2, QHeaderView::ResizeToContents);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+#else
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+   this->ui->tblPeers->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+#endif
    this->ui->tblPeers->horizontalHeader()->setVisible(false);
 
    // TODO: is there an another way to reduce the row size?
-   this->ui->tblPeers->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-   this->ui->tblPeers->verticalHeader()->setDefaultSectionSize(QApplication::fontMetrics().height() + 4);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+   this->ui->tblPeers->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#else
+   this->ui->tblPeers->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#endif
+   this->ui->tblPeers->verticalHeader()->setDefaultSectionSize(QFontMetrics(qApp->font()).height() + 4);
    this->ui->tblPeers->verticalHeader()->setVisible(false);
    this->ui->tblPeers->setSelectionBehavior(QAbstractItemView::SelectRows);
    this->ui->tblPeers->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -102,18 +115,27 @@ MainWindow::MainWindow(QSharedPointer<RCC::ICoreConnection> coreConnection, QWid
 
    this->ui->tblPeers->setContextMenuPolicy(Qt::CustomContextMenu);
 
-   connect(this->ui->tblPeers, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(displayContextMenuPeers(const QPoint&)));
-   connect(this->ui->tblPeers, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(browse()));
+   connect(this->ui->tblPeers, &QWidget::customContextMenuRequested, this, &MainWindow::displayContextMenuPeers);
+   connect(this->ui->tblPeers, &QAbstractItemView::doubleClicked, this, &MainWindow::browse);
 
    this->ui->tblLog->setModel(&this->logModel);
 
    this->ui->tblLog->setItemDelegate(&this->logDelegate);
-   this->ui->tblLog->horizontalHeader()->setResizeMode(0, QHeaderView::ResizeToContents);
-   this->ui->tblLog->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+   this->ui->tblLog->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->tblLog->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+#else
+   this->ui->tblLog->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+   this->ui->tblLog->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+#endif
    this->ui->tblLog->horizontalHeader()->setVisible(false);
 
-   this->ui->tblLog->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-   this->ui->tblLog->verticalHeader()->setDefaultSectionSize(QApplication::fontMetrics().height() + 2);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+   this->ui->tblLog->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#else
+   this->ui->tblLog->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#endif
+   this->ui->tblLog->verticalHeader()->setDefaultSectionSize(QFontMetrics(qApp->font()).height() + 2);
    this->ui->tblLog->verticalHeader()->setVisible(false);
    this->ui->tblLog->setSelectionBehavior(QAbstractItemView::SelectRows);
    this->ui->tblLog->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -122,12 +144,12 @@ MainWindow::MainWindow(QSharedPointer<RCC::ICoreConnection> coreConnection, QWid
    this->ui->tblLog->setAutoScroll(false);
    this->ui->tblLog->setAlternatingRowColors(true);
 
-   connect(&this->logModel, SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(newLogMessage()));
-   connect(this->ui->tblLog->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(logScrollChanged(int)));
-   connect(this->ui->dockLog, SIGNAL(visibilityChanged(bool)), statusBar, SLOT(dockLogVisibilityChanged(bool)));
+   connect(&this->logModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::newLogMessage);
+   connect(this->ui->tblLog->verticalScrollBar(), &QAbstractSlider::valueChanged, this, &MainWindow::logScrollChanged);
+   connect(this->ui->dockLog, &QDockWidget::visibilityChanged, statusBar, &StatusBar::dockLogVisibilityChanged);
 
-   connect(this->ui->butSearch, SIGNAL(clicked()), this, SLOT(searchOtherPeers()));
-   connect(this->ui->butSearchOwnFiles, SIGNAL(clicked()), this, SLOT(searchOwnFiles()));
+   connect(this->ui->butSearch, &QAbstractButton::clicked, this, &MainWindow::searchOtherPeers);
+   connect(this->ui->butSearchOwnFiles, &QAbstractButton::clicked, this, &MainWindow::searchOwnFiles);
    this->ui->txtSearch->installEventFilter(this); // the signal 'returnPressed()' doesn't contain the key modifier information (shift = search among our files), we have to use a event filter.
 
    this->addWidgetSettings();
@@ -136,9 +158,9 @@ MainWindow::MainWindow(QSharedPointer<RCC::ICoreConnection> coreConnection, QWid
 
    this->ui->grip->setVisible(false);
    this->ui->grip->installEventFilter(this);
-   connect(this->ui->butClose, SIGNAL(clicked()), this, SLOT(close()));
-   connect(this->ui->butMinimize, SIGNAL(clicked()), this, SLOT(showMinimized()));
-   connect(this->ui->butMaximize, SIGNAL(clicked()), this, SLOT(maximize()));
+   connect(this->ui->butClose, &QAbstractButton::clicked, this, [this]() { this->close(); });
+   connect(this->ui->butMinimize, &QAbstractButton::clicked, this, [this]() { this->showMinimized(); });
+   connect(this->ui->butMaximize, &QAbstractButton::clicked, this, &MainWindow::maximize);
    if (!SETTINGS.get<QString>("style").isEmpty())
       this->loadCustomStyle(QCoreApplication::applicationDirPath() % "/" % Common::Constants::STYLE_DIRECTORY % "/" % SETTINGS.get<QString>("style") % "/" % Common::Constants::STYLE_FILE_NAME);
 
@@ -146,17 +168,17 @@ MainWindow::MainWindow(QSharedPointer<RCC::ICoreConnection> coreConnection, QWid
 
    this->restoreColorizedPeers();
 
-   connect(this->coreConnection.data(), SIGNAL(newState(const Protos::GUI::State&)), this, SLOT(newState(const Protos::GUI::State&)));
-   connect(this->coreConnection.data(), SIGNAL(connectingError(RCC::ICoreConnection::ConnectionErrorCode)), this, SLOT(coreConnectionError(RCC::ICoreConnection::ConnectionErrorCode)));
-   connect(this->coreConnection.data(), SIGNAL(connected()), this, SLOT(coreConnected()));
-   connect(this->coreConnection.data(), SIGNAL(disconnected(bool)), this, SLOT(coreDisconnected(bool)));
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::newState, this, &MainWindow::newState);
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::connectingError, this, &MainWindow::coreConnectionError);
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::connected, this, &MainWindow::coreConnected);
+   connect(this->coreConnection.data(), &RCC::ICoreConnection::disconnected, this, &MainWindow::coreDisconnected);
 
    this->coreConnection->connectToCore(SETTINGS.get<QString>("core_address"), SETTINGS.get<quint32>("core_port"), SETTINGS.get<Common::Hash>("password"));
 
 #ifdef DEBUG
    QPushButton* logEntireQWidgetTreeButton = new QPushButton();
    logEntireQWidgetTreeButton->setText("log widget tree");
-   connect(logEntireQWidgetTreeButton, SIGNAL(clicked()), this, SLOT(logEntireQWidgetTree()));
+   connect(logEntireQWidgetTreeButton, &QAbstractButton::clicked, this, &MainWindow::logEntireQWidgetTree);
    this->ui->statusBar->addWidget(logEntireQWidgetTreeButton);
 #endif
 }
@@ -282,20 +304,25 @@ void MainWindow::displayContextMenuPeers(const QPoint& point)
    addrVariant.setValue(addr);
 
    QMenu menu;
-   menu.addAction(QIcon(":/icons/ressources/folder.png"), tr("Browse"), this, SLOT(browse()));
+   QAction* browseAction = menu.addAction(QIcon(":/icons/ressources/folder.png"), tr("Browse"));
+   connect(browseAction, &QAction::triggered, this, &MainWindow::browse);
 
    if (!addr.isNull())
    {
-      QAction* takeControlAction = menu.addAction(QIcon(":/icons/ressources/lightning.png"), tr("Take control"), this, SLOT(takeControlOfACore()));
+      QAction* takeControlAction = menu.addAction(QIcon(":/icons/ressources/lightning.png"), tr("Take control"));
+      connect(takeControlAction, &QAction::triggered, this, &MainWindow::takeControlOfACore);
       takeControlAction->setData(addrVariant);
-      QAction* copyIPAction = menu.addAction(tr("Copy IP: %1").arg(addr.toString()), this, SLOT(copyIPToClipboard()));
+      QAction* copyIPAction = menu.addAction(tr("Copy IP: %1").arg(addr.toString()));
+      connect(copyIPAction, &QAction::triggered, this, &MainWindow::copyIPToClipboard);
       copyIPAction->setData(addrVariant);
    }
 
    menu.addSeparator();
 
-   QAction* sortBySharingAmountAction = menu.addAction(tr("Sort by the amount of sharing"), this, SLOT(sortPeersBySharingAmount()));
-   QAction* sortByNickAction = menu.addAction(tr("Sort alphabetically"), this, SLOT(sortPeersByNick()));
+   QAction* sortBySharingAmountAction = menu.addAction(tr("Sort by the amount of sharing"));
+   connect(sortBySharingAmountAction, &QAction::triggered, this, &MainWindow::sortPeersBySharingAmount);
+   QAction* sortByNickAction = menu.addAction(tr("Sort alphabetically"));
+   connect(sortByNickAction, &QAction::triggered, this, &MainWindow::sortPeersByNick);
 
    QActionGroup sortGroup(this);
    sortGroup.setExclusive(true);
@@ -308,17 +335,24 @@ void MainWindow::displayContextMenuPeers(const QPoint& point)
 
    menu.addSeparator();
 
-   menu.addAction(QIcon(":/icons/ressources/marble_red.png"), tr("Colorize in red"), this, SLOT(colorizeSelectedPeer()))->setData(QColor(128, 0, 0));
-   menu.addAction(QIcon(":/icons/ressources/marble_blue.png"), tr("Colorize in blue"), this, SLOT(colorizeSelectedPeer()))->setData(QColor(0, 0, 128));
-   menu.addAction(QIcon(":/icons/ressources/marble_green.png"), tr("Colorize in green"), this, SLOT(colorizeSelectedPeer()))->setData(QColor(0, 128, 0));
-   menu.addAction(tr("Uncolorize"), this, SLOT(uncolorizeSelectedPeer()));
+   QAction* colorizeRedAction = menu.addAction(QIcon(":/icons/ressources/marble_red.png"), tr("Colorize in red"));
+   connect(colorizeRedAction, &QAction::triggered, this, &MainWindow::colorizeSelectedPeer);
+   colorizeRedAction->setData(QColor(128, 0, 0));
+   QAction* colorizeBlueAction = menu.addAction(QIcon(":/icons/ressources/marble_blue.png"), tr("Colorize in blue"));
+   connect(colorizeBlueAction, &QAction::triggered, this, &MainWindow::colorizeSelectedPeer);
+   colorizeBlueAction->setData(QColor(0, 0, 128));
+   QAction* colorizeGreenAction = menu.addAction(QIcon(":/icons/ressources/marble_green.png"), tr("Colorize in green"));
+   connect(colorizeGreenAction, &QAction::triggered, this, &MainWindow::colorizeSelectedPeer);
+   colorizeGreenAction->setData(QColor(0, 128, 0));
+   QAction* uncolorizeAction = menu.addAction(tr("Uncolorize"));
+   connect(uncolorizeAction, &QAction::triggered, this, &MainWindow::uncolorizeSelectedPeer);
 
    menu.exec(this->ui->tblPeers->mapToGlobal(point));
 }
 
 void MainWindow::browse()
 {
-   foreach (QModelIndex i, this->ui->tblPeers->selectionModel()->selectedIndexes())
+   for (const auto& i : this->ui->tblPeers->selectionModel()->selectedIndexes())
    {
       if (i.isValid())
       {
@@ -399,7 +433,7 @@ void MainWindow::colorizeSelectedPeer()
    const QColor color = static_cast<QAction*>(this->sender())->data().value<QColor>();
 
    QSet<Common::Hash> peerIDs;
-   foreach (QModelIndex i, this->ui->tblPeers->selectionModel()->selectedIndexes())
+   for (const auto& i : this->ui->tblPeers->selectionModel()->selectedIndexes())
    {
       this->peerListModel.colorize(i, color);
       peerIDs << this->peerListModel.getPeerID(i.row());
@@ -417,7 +451,7 @@ void MainWindow::colorizeSelectedPeer()
       }
    }
 
-   foreach (Common::Hash peerID, peerIDs)
+   for (const auto& peerID : peerIDs)
    {
       Protos::GUI::Settings::HighlightedPeers::Peer* peer = highlightedPeers.add_peer();
       peer->mutable_id()->set_hash(peerID.getData(), Common::Hash::HASH_SIZE);
@@ -433,7 +467,7 @@ void MainWindow::colorizeSelectedPeer()
 void MainWindow::uncolorizeSelectedPeer()
 {
    QSet<Common::Hash> peerIDs;
-   foreach (QModelIndex i, this->ui->tblPeers->selectionModel()->selectedIndexes())
+   for (const auto& i : this->ui->tblPeers->selectionModel()->selectedIndexes())
    {
       this->peerListModel.uncolorize(i);
       peerIDs << this->peerListModel.getPeerID(i.row());
@@ -628,7 +662,11 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
    {
       if (event->type() == QEvent::MouseButtonPress && static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton)
       {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+         this->dragPosition = static_cast<QMouseEvent*>(event)->globalPosition().toPoint() - frameGeometry().topLeft();
+#else
          this->dragPosition = static_cast<QMouseEvent*>(event)->globalPos() - frameGeometry().topLeft();
+#endif
       }
       if (event->type() == QEvent::MouseButtonRelease && static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton)
       {
@@ -636,7 +674,11 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
       }
       else if (event->type() == QEvent::MouseMove && !this->isMaximized() && static_cast<QMouseEvent*>(event)->buttons() & Qt::LeftButton && !this->dragPosition.isNull())
       {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+         move(static_cast<QMouseEvent*>(event)->globalPosition().toPoint() - this->dragPosition);
+#else
          move(static_cast<QMouseEvent*>(event)->globalPos() - this->dragPosition);
+#endif
       }
       else if (event->type() == QEvent::Resize)
       {
@@ -701,7 +743,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
    void MainWindow::showEvent(QShowEvent* /*event*/)
    {
       // It seems that the handle change every time the style is changed.
-      this->taskbar.setWinHandle(this->winId());
+      this->taskbar.setWinHandle(reinterpret_cast<HWND>(this->winId()));
    }
 
    bool MainWindow::winEvent(MSG* message, long* result)
@@ -730,7 +772,9 @@ void MainWindow::setApplicationStateAsConnected()
       Protos::GUI::Settings_Window_WIN_DOWNLOAD <<
       Protos::GUI::Settings_Window_WIN_UPLOAD;
 
-   if (!QSet<quint32>::fromList(windowsOrder).contains(QSet<quint32>::fromList(windowsOrderDefault)))
+   const QSet<quint32> windowsOrderSet(windowsOrder.cbegin(), windowsOrder.cend());
+   const QSet<quint32> windowsOrderDefaultSet(windowsOrderDefault.cbegin(), windowsOrderDefault.cend());
+   if (!windowsOrderSet.contains(windowsOrderDefaultSet))
       windowsOrder = windowsOrderDefault;
 
    for (QListIterator<quint32> i(windowsOrder); i.hasNext();)
@@ -765,7 +809,7 @@ void MainWindow::setApplicationStateAsDisconnected()
 
 void MainWindow::saveWindowsSettings()
 {
-   L_DEBU(QString("Save state : %1").arg(QString::fromAscii(this->saveState().toHex().data())));
+   L_DEBU(QString("Save state : %1").arg(QString::fromLatin1(this->saveState().toHex())));
 
    SETTINGS.set("windows_state", this->saveState());
 
@@ -839,8 +883,8 @@ void MainWindow::removeMdiSubWindow(QMdiSubWindow* mdiSubWindow)
 void MainWindow::addWidgetSettings()
 {
    this->widgetSettings = new WidgetSettings(this->coreConnection, this->sharedDirsModel, this);
-   connect(this->widgetSettings, SIGNAL(languageChanged(QString)), this, SIGNAL(languageChanged(QString)));
-   connect(this->widgetSettings, SIGNAL(styleChanged(QString)), this, SLOT(loadCustomStyle(QString)));
+   connect(this->widgetSettings, &WidgetSettings::languageChanged, this, &MainWindow::languageChanged);
+   connect(this->widgetSettings, &WidgetSettings::styleChanged, this, &MainWindow::loadCustomStyle);
    this->ui->mdiArea->addSubWindow(this->widgetSettings, Qt::CustomizeWindowHint);
    this->mdiAreaTabBar->setTabData(this->mdiAreaTabBar->count() - 1, Protos::GUI::Settings_Window_WIN_SETTINGS);
    this->widgetSettings->setWindowState(Qt::WindowMaximized);
@@ -886,7 +930,7 @@ void MainWindow::addWidgetDownloads()
    this->mdiAreaTabBar->setTabData(this->mdiAreaTabBar->count() - 1, Protos::GUI::Settings_Window_WIN_DOWNLOAD);
    this->widgetDownloads->setWindowState(Qt::WindowMaximized);
 
-   connect(this->widgetDownloads, SIGNAL(globalProgressChanged(quint64, quint64)), this, SLOT(onGlobalProgressChanged(quint64, quint64)));
+   connect(this->widgetDownloads, &WidgetDownloads::globalProgressChanged, this, &MainWindow::onGlobalProgressChanged);
 
    this->downloadsBusyIndicator = new BusyIndicator();
    this->downloadsBusyIndicator->setObjectName("tabWidget");
@@ -947,10 +991,10 @@ WidgetBrowse* MainWindow::addWidgetBrowse(const Common::Hash& peerID)
    buttons->setObjectName("tabWidget");
 
    TabCloseButton* closeButton = new TabCloseButton(widgetBrowse, buttons);
-   connect(closeButton, SIGNAL(clicked(QWidget*)), this, SLOT(removeWidget(QWidget*)));
+   connect(closeButton, static_cast<void (TabCloseButton::*)(QWidget*)>(&TabCloseButton::clicked), this, &MainWindow::removeWidget);
 
    TabRefreshButton* refreshButton = new TabRefreshButton(buttons);
-   connect(refreshButton, SIGNAL(clicked()), widgetBrowse, SLOT(refresh()));
+   connect(refreshButton, &QAbstractButton::clicked, widgetBrowse, &WidgetBrowse::refresh);
 
    QHBoxLayout* layButtons = new QHBoxLayout(buttons);
    layButtons->setContentsMargins(0, 0, 0, 0);
@@ -975,11 +1019,11 @@ WidgetSearch* MainWindow::addWidgetSearch(const QString& term, bool searchInOwnF
    this->ui->mdiArea->addSubWindow(widgetSearch, Qt::CustomizeWindowHint);
    widgetSearch->setWindowState(Qt::WindowMaximized);
    this->widgetsSearch << widgetSearch;
-   connect(widgetSearch, SIGNAL(browse(const Common::Hash&, const Protos::Common::Entry&)), this, SLOT(addWidgetBrowse(const Common::Hash&, const Protos::Common::Entry&)));
+   connect(widgetSearch, &WidgetSearch::browse, this, [this](const Common::Hash& peerID, const Protos::Common::Entry& remoteEntry) { this->addWidgetBrowse(peerID, remoteEntry); });
 
    TabCloseButton* closeButton = new TabCloseButton(widgetSearch);
    closeButton->setObjectName("tabWidget");
-   connect(closeButton, SIGNAL(clicked(QWidget*)), this, SLOT(removeWidget(QWidget*)));
+   connect(closeButton, static_cast<void (TabCloseButton::*)(QWidget*)>(&TabCloseButton::clicked), this, &MainWindow::removeWidget);
    this->mdiAreaTabBar->setTabButton(this->mdiAreaTabBar->count() - 1, QTabBar::RightSide, closeButton);
 
    return widgetSearch;
@@ -987,9 +1031,9 @@ WidgetSearch* MainWindow::addWidgetSearch(const QString& term, bool searchInOwnF
 
 void MainWindow::removeAllWidgets()
 {
-   foreach (WidgetBrowse* widget, this->widgetsBrowse)
+   for (auto* widget : this->widgetsBrowse)
       this->removeWidget(widget);
 
-   foreach (WidgetSearch* widget, this->widgetsSearch)
+   for (auto* widget : this->widgetsSearch)
       this->removeWidget(widget);
 }

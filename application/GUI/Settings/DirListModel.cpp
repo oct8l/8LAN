@@ -73,7 +73,7 @@ void DirListModel::addDir(const Common::SharedDir& dir)
 
 void DirListModel::addDirs(const QStringList& dirs)
 {
-   foreach (QString dir, dirs)
+   for (const auto& dir : dirs)
       this->addDir(Common::SharedDir { Common::Hash(), dir, 0 ,0 });
 }
 

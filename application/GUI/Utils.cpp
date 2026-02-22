@@ -78,7 +78,7 @@ QStringList Utils::askForDirectoriesToDownloadTo(QSharedPointer<RCC::ICoreConnec
 
 void Utils::openLocations(const QStringList& paths)
 {
-   foreach (QString path, paths)
+   for (const auto& path : paths)
       Utils::openLocation(path);
 }
 

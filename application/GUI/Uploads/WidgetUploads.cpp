@@ -27,7 +27,7 @@ void UploadsDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
 
    if (index.column() == 2)
    {
-      QStyleOptionProgressBarV2 progressBarOption;
+      QStyleOptionProgressBar progressBarOption;
       progressBarOption.QStyleOption::operator=(option);
 
       progressBarOption.minimum = 0;
@@ -41,7 +41,7 @@ void UploadsDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
    else
    {
       // Remove the focus box, not very useful.
-      QStyleOptionViewItemV4 newOption(option);
+      QStyleOptionViewItem newOption(option);
       newOption.state = option.state & (~QStyle::State_HasFocus);
       QStyledItemDelegate::paint(painter, newOption, index);
    }
@@ -67,14 +67,14 @@ WidgetUploads::WidgetUploads(QSharedPointer<RCC::ICoreConnection> coreConnection
    this->ui->tblUploads->setItemDelegate(&this->uploadsDelegate);
    this->ui->tblUploads->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
    this->ui->tblUploads->horizontalHeader()->setVisible(false);
-   this->ui->tblUploads->horizontalHeader()->setResizeMode(0, QHeaderView::Stretch);
-   this->ui->tblUploads->horizontalHeader()->setResizeMode(1, QHeaderView::ResizeToContents);
-   this->ui->tblUploads->horizontalHeader()->setResizeMode(2, QHeaderView::ResizeToContents);
-   this->ui->tblUploads->horizontalHeader()->setResizeMode(3, QHeaderView::ResizeToContents);
+   this->ui->tblUploads->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+   this->ui->tblUploads->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+   this->ui->tblUploads->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+   this->ui->tblUploads->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
 
-   //this->ui->tblChat->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-   this->ui->tblUploads->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-   this->ui->tblUploads->verticalHeader()->setDefaultSectionSize(QApplication::fontMetrics().height() + 2);
+   //this->ui->tblChat->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+   this->ui->tblUploads->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+   this->ui->tblUploads->verticalHeader()->setDefaultSectionSize(QFontMetrics(qApp->font()).height() + 2);
 
    this->ui->tblUploads->verticalHeader()->setVisible(false);
    this->ui->tblUploads->setSelectionBehavior(QAbstractItemView::SelectRows);

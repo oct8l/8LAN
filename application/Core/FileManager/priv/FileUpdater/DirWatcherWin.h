@@ -63,7 +63,7 @@ namespace FM
       char notifyBuffer[NOTIFY_BUFFER_SIZE]; ///< Is this data can be shares among some 'ReadDirectoryChangesW'?
       DWORD nbBytesNotifyBuffer;
 
-      QMutex mutex;
+      QRecursiveMutex mutex;
    };
 }
 

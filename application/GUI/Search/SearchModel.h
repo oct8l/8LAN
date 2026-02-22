@@ -41,6 +41,8 @@ namespace GUI
       static const int NB_SIGNAL_PROGRESS; // The number of signal progress sent during a search.
       Q_OBJECT
    public:
+      using BrowseModel::result;
+
       SearchModel(QSharedPointer<RCC::ICoreConnection> coreConnection, const PeerListModel& peerListModel, const DirListModel& sharedDirsModel);
       ~SearchModel();
 
@@ -95,6 +97,8 @@ namespace GUI
       class SearchTree : public Tree
       {
       public:
+         using Tree::insertChild;
+
          static QString entryPath(const Protos::Common::Entry& entry);
 
          SearchTree();

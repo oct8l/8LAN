@@ -46,7 +46,7 @@ namespace PM { class IPeer; }
 
 namespace DM
 {
-   class ChunkDownloader : public QObject, public Common::IRunnable, public IChunkDownloader, Common::Uncopyable
+   class ChunkDownloader : public QObject, public QEnableSharedFromThis<ChunkDownloader>, public Common::IRunnable, public IChunkDownloader, Common::Uncopyable
    {
       static const int MINIMUM_DELTA_TIME_TO_COMPUTE_SPEED;
 
@@ -127,7 +127,7 @@ namespace DM
 
       QThread* mainThread;
 
-      mutable QMutex mutex; // To protect 'peers' and 'downloading'.
+      mutable QRecursiveMutex mutex; // To protect 'peers' and 'downloading'.
    };
 }
 #endif

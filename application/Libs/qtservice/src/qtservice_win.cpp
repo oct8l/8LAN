@@ -51,6 +51,9 @@
 #include <qt_windows.h>
 #include <QtCore/QWaitCondition>
 #include <QtCore/QAbstractEventDispatcher>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtCore/QAbstractNativeEventFilter>
+#endif
 #include <QtCore/QVector>
 #include <QtCore/QThread>
 #include <stdio.h>
@@ -88,8 +91,6 @@ typedef BOOL(WINAPI*PReportEvent)(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCTSTR
 static PReportEvent pReportEvent = 0;
 typedef HANDLE(WINAPI*PRegisterEventSource)(LPCTSTR,LPCTSTR);
 static PRegisterEventSource pRegisterEventSource = 0;
-typedef DWORD(WINAPI*PRegisterServiceProcess)(DWORD,DWORD);
-static PRegisterServiceProcess pRegisterServiceProcess = 0;
 typedef BOOL(WINAPI*PQueryServiceConfig)(SC_HANDLE,LPQUERY_SERVICE_CONFIG,DWORD,LPDWORD);
 static PQueryServiceConfig pQueryServiceConfig = 0;
 typedef BOOL(WINAPI*PQueryServiceConfig2)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
@@ -429,7 +430,7 @@ void QtServiceBase::logMessage(const QString &message, MessageType type,
     case Information: //fall through
     default: dbgMsg += "Information] "; break;
     }
-    dbgMsg += message.toAscii();
+    dbgMsg += message.toLatin1();
     qtServiceLogDebug((QtMsgType)-1, dbgMsg.constData());
 #endif
 
@@ -486,7 +487,11 @@ public:
     QStringList serviceArgs;
 
     static QtServiceSysPrivate *instance;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    static QAbstractNativeEventFilter* nativeEventFilter;
+#else
     static QCoreApplication::EventFilter nextFilter;
+#endif
 
     QWaitCondition condition;
     QMutex mutex;
@@ -511,7 +516,11 @@ void QtServiceControllerHandler::customEvent(QEvent *e)
 
 
 QtServiceSysPrivate *QtServiceSysPrivate::instance = 0;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+QAbstractNativeEventFilter* QtServiceSysPrivate::nativeEventFilter = 0;
+#else
 QCoreApplication::EventFilter QtServiceSysPrivate::nextFilter = 0;
+#endif
 
 QtServiceSysPrivate::QtServiceSysPrivate()
 {
@@ -680,7 +689,7 @@ class HandlerThread : public QThread
 {
 public:
     HandlerThread()
-        : success(true), console(false), QThread()
+        : QThread(), success(true), console(false)
         {}
 
     bool calledOk() { return success; }
@@ -715,6 +724,22 @@ protected:
 /*
   Ignore WM_ENDSESSION system events, since they make the Qt kernel quit
 */
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+class QtServiceNativeEventFilter : public QAbstractNativeEventFilter
+{
+public:
+    bool nativeEventFilter(const QByteArray&, void* message, long* result) override
+    {
+        MSG* msg = reinterpret_cast<MSG*>(message);
+        if (!msg || (msg->message != WM_ENDSESSION) || !(msg->lParam & ENDSESSION_LOGOFF))
+            return false;
+
+        if (result)
+            *result = TRUE;
+        return true;
+    }
+};
+#else
 bool myEventFilter(void* message, long* result)
 {
     MSG* msg = reinterpret_cast<MSG*>(message);
@@ -727,6 +752,7 @@ bool myEventFilter(void* message, long* result)
         *result = TRUE;
     return true;
 }
+#endif
 
 /* There are three ways we can be started:
 
@@ -786,7 +812,12 @@ bool QtServiceBasePrivate::start()
     QCoreApplication *app = QCoreApplication::instance();
     if (!app)
         return false;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QtServiceSysPrivate::nativeEventFilter = new QtServiceNativeEventFilter();
+    app->installNativeEventFilter(QtServiceSysPrivate::nativeEventFilter);
+#else
     QtServiceSysPrivate::nextFilter = app->setEventFilter(myEventFilter);
+#endif
 
     sys->controllerHandler = new QtServiceControllerHandler(sys);
 
@@ -801,6 +832,13 @@ bool QtServiceBasePrivate::start()
     sys->controllerHandler = 0;
     if (ht->isFinished())
         delete ht;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    if (QtServiceSysPrivate::nativeEventFilter) {
+        app->removeNativeEventFilter(QtServiceSysPrivate::nativeEventFilter);
+        delete QtServiceSysPrivate::nativeEventFilter;
+        QtServiceSysPrivate::nativeEventFilter = 0;
+    }
+#endif
     delete app;
     sysCleanup();
     return true;
@@ -902,5 +940,3 @@ void QtServiceBase::setServiceFlags(QtServiceBase::ServiceFlags flags)
     if (d_ptr->sysd)
         d_ptr->sysd->setServiceFlags(flags);
 }
-
-

@@ -130,12 +130,12 @@ void Tests::logFromStderr()
   */
 void Tests::startTheThreadLoggers()
 {
-   foreach (QSharedPointer<ThreadLogger> logger, this->threadLoggers)
+   for (const auto& logger : this->threadLoggers)
    {
       logger->start();
       QTest::qWait(100);
    }
-   foreach (QSharedPointer<ThreadLogger> logger, this->threadLoggers)
+   for (const auto& logger : this->threadLoggers)
    {
       logger->wait();
    }

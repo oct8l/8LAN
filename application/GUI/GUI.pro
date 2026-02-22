@@ -8,6 +8,8 @@
 # DEFINES += ENABLE_NVWA
 
 QT       += core gui network
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+win32:greaterThan(QT_MAJOR_VERSION, 4):lessThan(QT_MAJOR_VERSION, 6): QT += winextras
 TARGET = "D-LAN.GUI"
 TEMPLATE = app
 
@@ -39,6 +41,7 @@ CONFIG(debug, debug|release) {
 
 win32 {
    LIBS += libole32
+   LIBS += -luuid
    SOURCES += Taskbar/TaskbarImplWin.cpp
    HEADERS += Taskbar/TaskbarImplWin.h
 }
@@ -139,5 +142,3 @@ FORMS    += MainWindow.ui \
 
 RESOURCES += \
     ressources.qrc
-
-

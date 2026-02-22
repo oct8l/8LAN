@@ -20,41 +20,35 @@
 using namespace LM;
 
 #include <QString>
-#include <QStringList>
 
 #include <Exceptions.h>
 
 const QString Entry::DATE_TIME_FORMAT("yyyy-MM-dd HH:mm:ss");
 const QString Entry::DATE_TIME_FORMAT_WITH_MS("yyyy-MM-dd HH:mm:ss.zzz");
 const QString Entry::SEVERITIES_STR[] = {"Fatal", "Error", "Warning", "Debug", "User", "Unkown"};
-QRegExp Entry::lineRegExp("(\\S{10} \\S{8})\\.(\\d{3}) \\[(.+)\\] \\{(.+)\\} \\((\\w+)\\) (?:<(\\S+:\\d+)> )?: (.*)");
+QRegularExpression Entry::lineRegExp("^(\\S{10} \\S{8})\\.(\\d{3}) \\[(.+)\\] \\{(.+)\\} \\((\\w+)\\) (?:<(\\S+:\\d+)> )?: (.*)$");
 
 Entry::Entry(const QString& line) :
    severity(SV_UNKNOWN)
 {
-   //lineRegExp.setMinimal(true); // Non-greedy.
-   if (!Entry::lineRegExp.exactMatch(line))
+   const QRegularExpressionMatch match = Entry::lineRegExp.match(line);
+   if (!match.hasMatch())
       throw MalformedEntryLog(line);
 
-   QStringList capturedTexts = Entry::lineRegExp.capturedTexts();
-
-   if (capturedTexts.count() < 7)
+   if (match.lastCapturedIndex() < 7)
       return;
 
-   this->date = QDateTime::fromString(capturedTexts[1], Entry::DATE_TIME_FORMAT);
-   this->date = this->date.addMSecs(capturedTexts[2].toInt());
+   this->date = QDateTime::fromString(match.captured(1), Entry::DATE_TIME_FORMAT);
+   this->date = this->date.addMSecs(match.captured(2).toInt());
 
-   this->severity = Entry::severityFromStr(capturedTexts[3]);
-   this->name = capturedTexts[4];
-   this->thread = capturedTexts[5];
+   this->severity = Entry::severityFromStr(match.captured(3));
+   this->name = match.captured(4);
+   this->thread = match.captured(5);
 
-   if (capturedTexts.count() == 7)
-      this->message = capturedTexts[6];
-   else if (capturedTexts.count() == 8)
-   {
-      this->source = capturedTexts[6];
-      this->message = capturedTexts[7];
-   }
+   const QString capturedSource = match.captured(6);
+   if (!capturedSource.isEmpty())
+      this->source = capturedSource;
+   this->message = match.captured(7);
 }
 
 Entry::Entry(const QDateTime& dateTime, Severity severity, const QString& name, const QString& thread, const QString& source, const QString& message) :

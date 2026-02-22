@@ -68,7 +68,7 @@ namespace FM
        void rmWatcher(int watcher);
        QString getEventPath(inotify_event *event);
 
-       QMutex mutex;
+       QRecursiveMutex mutex;
 
        bool initialized;
        int fileDescriptor;

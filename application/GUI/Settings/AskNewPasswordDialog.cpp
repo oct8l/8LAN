@@ -20,7 +20,9 @@
 #include <ui_AskNewPasswordDialog.h>
 using namespace GUI;
 
+#include <QDialogButtonBox>
 #include <QMessageBox>
+#include <QRegularExpression>
 
 #include <Common/Settings.h>
 
@@ -38,8 +40,8 @@ AskNewPasswordDialog::AskNewPasswordDialog(QSharedPointer<RCC::ICoreConnection> 
    }
    this->setMaximumHeight(0);
 
-   connect(this->ui->buttons, SIGNAL(rejected()), this, SLOT(reject()));
-   connect(this->ui->buttons, SIGNAL(accepted()), this, SLOT(ok()));
+   connect(this->ui->buttons, &QDialogButtonBox::rejected, this, &AskNewPasswordDialog::reject);
+   connect(this->ui->buttons, &QDialogButtonBox::accepted, this, &AskNewPasswordDialog::ok);
 }
 
 AskNewPasswordDialog::~AskNewPasswordDialog()
@@ -49,6 +51,8 @@ AskNewPasswordDialog::~AskNewPasswordDialog()
 
 void AskNewPasswordDialog::ok()
 {
+   static const QRegularExpression whitespacePattern("\\s");
+
    if (this->ui->txtNewPassword->text() != this->ui->txtNewPasswordRepeated->text())
    {
       QMessageBox::information(this, "Error", "The passwords aren't the same");
@@ -59,7 +63,7 @@ void AskNewPasswordDialog::ok()
       QMessageBox::information(this, "Error", "The password can't be empty");
       return;
    }
-   else if (this->ui->txtNewPassword->text().contains(QRegExp("\\s")))
+   else if (this->ui->txtNewPassword->text().contains(whitespacePattern))
    {
       QMessageBox::information(this, "Error", "The password can't contain one or more whitespace");
       return;

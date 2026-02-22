@@ -50,7 +50,7 @@ namespace LM
       static QTextStream out;
       static QFile file;
 
-      static QMutex mutex;
+      static QRecursiveMutex mutex;
 
       static QString logDirName;
 

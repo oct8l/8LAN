@@ -21,6 +21,8 @@ using namespace NL;
 
 #include <limits>
 
+#include <QDateTime>
+
 #if defined(Q_OS_LINUX)
    #include <netinet/in.h>
 #elif defined(Q_OS_DARWIN)
@@ -71,12 +73,13 @@ UDPListener::UDPListener(
    downloadManager(downloadManager),
    currentIMAliveTag(0),
    nextHashRequestType(FIRST_HASHES),
+   imAliveWindowStartMs(0),
    loggerIMAlive(LM::Builder::newLogger("NetworkListener (IMAlive)"))
 {
    this->initMulticastUDPSocket();
    this->initUnicastUDPSocket();
 
-   connect(&this->timerIMAlive, SIGNAL(timeout()), this, SLOT(sendIMAliveMessage()));
+   connect(&this->timerIMAlive, &QTimer::timeout, this, &UDPListener::sendIMAliveMessage);
    this->timerIMAlive.start(static_cast<int>(SETTINGS.get<quint32>("peer_imalive_period")));
 
    this->sendIMAliveMessage();
@@ -145,9 +148,7 @@ void UDPListener::sendIMAliveMessage()
    IMAliveMessage.set_download_rate(this->downloadManager->getDownloadRate());
    IMAliveMessage.set_upload_rate(this->uploadManager->getUploadRate());
 
-   this->currentIMAliveTag = this->mtrand.randInt();
-   this->currentIMAliveTag <<= 32;
-   this->currentIMAliveTag |= this->mtrand.randInt();
+   this->currentIMAliveTag = QRandomGenerator::global()->generate64();
    IMAliveMessage.set_tag(this->currentIMAliveTag);
 
    // We fill the rest of the message with a maximum of needed hashes.
@@ -160,7 +161,7 @@ void UDPListener::sendIMAliveMessage()
    const int numberOfPeers = this->peerManager->getNbOfPeers();
    const int maxNumberOfHashesToSend = numberOfPeers == 0 ? std::numeric_limits<int>::max() : IMALIVE_PERIOD * (MAX_IMALIVE_THROUGHPUT - numberOfPeers * FIXED_RATE_PER_PEER) / (numberOfPeers * HASH_SIZE);
 
-   int numberOfHashesToSend = (this->MAX_UDP_DATAGRAM_PAYLOAD_SIZE - IMAliveMessage.ByteSize() - Common::MessageHeader::HEADER_SIZE) / HASH_SIZE;
+   int numberOfHashesToSend = (this->MAX_UDP_DATAGRAM_PAYLOAD_SIZE - static_cast<int>(IMAliveMessage.ByteSizeLong()) - Common::MessageHeader::HEADER_SIZE) / HASH_SIZE;
    if (numberOfHashesToSend > maxNumberOfHashesToSend)
       numberOfHashesToSend = maxNumberOfHashesToSend;
 
@@ -209,12 +210,48 @@ void UDPListener::rebindSockets()
 
 void UDPListener::processPendingMulticastDatagrams()
 {
+   static const qint64 WINDOW_MS = 60000; // one-minute sliding window for per-IP IMAlive counts
+
    while (this->multicastSocket.hasPendingDatagrams())
    {
       QHostAddress peerAddress;
       const Common::MessageHeader& header =  this->readDatagramToBuffer(this->multicastSocket, peerAddress);
       if (header.isNull())
          continue;
+
+      // Per-IP IMAlive flood mitigation (checked before protobuf parsing to avoid CPU amplification).
+      if (header.getType() == Common::MessageHeader::CORE_IM_ALIVE)
+      {
+         const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+
+         // Roll the window: reset counts and evict expired (non-banned) entries.
+         if (nowMs - this->imAliveWindowStartMs >= WINDOW_MS)
+         {
+            auto it = this->imAliveSenderStats.begin();
+            while (it != this->imAliveSenderStats.end())
+            {
+               if (it->banUntilMs <= nowMs)
+                  it = this->imAliveSenderStats.erase(it);
+               else { it->count = 0; ++it; }
+            }
+            this->imAliveWindowStartMs = nowMs;
+         }
+
+         ImAliveIpStats& stats = this->imAliveSenderStats[peerAddress];
+
+         if (stats.banUntilMs > nowMs)
+            continue; // still banned; silently drop
+
+         stats.count++;
+         if (stats.count > static_cast<int>(SETTINGS.get<quint32>("imalive_max_per_ip_per_min")))
+         {
+            const quint32 banMs = SETTINGS.get<quint32>("imalive_ban_duration_ms");
+            stats.banUntilMs = nowMs + static_cast<qint64>(banMs);
+            L_WARN(QString("IMAlive flood from %1: %2 msg in 60s window, ignoring for %3 s")
+               .arg(peerAddress.toString()).arg(stats.count).arg(banMs / 1000));
+            continue;
+         }
+      }
 
       switch (header.getType())
       {
@@ -399,6 +436,8 @@ void UDPListener::initMulticastUDPSocket()
    static const int BUFFER_SIZE_UDP = SETTINGS.get<quint32>("udp_buffer_size");
    const int multicastSocketDescriptor = this->multicastSocket.socketDescriptor();
 #if defined(Q_OS_DARWIN)
+   Q_UNUSED(BUFFER_SIZE_UDP)
+   Q_UNUSED(multicastSocketDescriptor)
    if (int error = 0) // TODO: Mac OS X
 #else
    if (int error = setsockopt(multicastSocketDescriptor, SOL_SOCKET, SO_RCVBUF, (char*)&BUFFER_SIZE_UDP, sizeof BUFFER_SIZE_UDP))
@@ -418,7 +457,7 @@ void UDPListener::initMulticastUDPSocket()
       return;
    }
 
-   connect(&this->multicastSocket, SIGNAL(readyRead()), this, SLOT(processPendingMulticastDatagrams()));
+   connect(&this->multicastSocket, &QUdpSocket::readyRead, this, &UDPListener::processPendingMulticastDatagrams);
 }
 
 void UDPListener::initUnicastUDPSocket()
@@ -430,6 +469,9 @@ void UDPListener::initUnicastUDPSocket()
       L_ERRO("Can't bind the unicast socket");
 
    static const int BUFFER_SIZE_UDP = SETTINGS.get<quint32>("udp_buffer_size");
+#if defined(Q_OS_DARWIN)
+   Q_UNUSED(BUFFER_SIZE_UDP)
+#endif
 
 #if defined(Q_OS_DARWIN)
    if (int error = 0) // TODO
@@ -445,7 +487,7 @@ void UDPListener::initUnicastUDPSocket()
 #endif
       L_ERRO(QString("Can't set socket option (unicast socket) : SO_SNDBUF : %1").arg(error));
 
-   connect(&this->unicastSocket, SIGNAL(readyRead()), this, SLOT(processPendingUnicastDatagrams()));
+   connect(&this->unicastSocket, &QUdpSocket::readyRead, this, &UDPListener::processPendingUnicastDatagrams);
 }
 
 /**
@@ -454,7 +496,7 @@ void UDPListener::initUnicastUDPSocket()
   */
 int UDPListener::writeMessageToBuffer(Common::MessageHeader::MessageType type, const google::protobuf::Message& message)
 {
-   const int bodySize = message.ByteSize();
+   const int bodySize = static_cast<int>(message.ByteSizeLong());
    const Common::MessageHeader header(type, bodySize, this->peerManager->getSelf()->getID());
 
    if (Common::MessageHeader::HEADER_SIZE + bodySize > this->MAX_UDP_DATAGRAM_PAYLOAD_SIZE)
@@ -523,4 +565,3 @@ Common::MessageHeader UDPListener::readDatagramToBuffer(QUdpSocket& socket, QHos
    }
    return header;
 }
-

@@ -69,7 +69,7 @@ void DownloadQueue::insert(int position, Download* download)
    {
       this->downloadsIndexedByName.insert(download->getLocalEntry().name(), download);
       this->downloadsSortedByTime.insert(QTime(), fileDownload);
-      connect(fileDownload, SIGNAL(lastTimeGetAllUnfinishedChunksChanged(QTime)), this, SLOT(fileDownloadTimeChanged(QTime)), Qt::QueuedConnection);
+      connect(fileDownload, &FileDownload::lastTimeGetAllUnfinishedChunksChanged, this, &DownloadQueue::fileDownloadTimeChanged, Qt::QueuedConnection);
    }
 }
 
@@ -242,7 +242,7 @@ bool DownloadQueue::removeDownloads(const DownloadPredicate& predicate)
   */
 bool DownloadQueue::pauseDownloads(QList<quint64> IDs, bool pause)
 {
-   QSet<quint64> IDsRemaining(IDs.toSet());
+   QSet<quint64> IDsRemaining(IDs.cbegin(), IDs.cend());
 
    bool stateChanged = false;
 
@@ -264,7 +264,7 @@ bool DownloadQueue::pauseDownloads(QList<quint64> IDs, bool pause)
   */
 bool DownloadQueue::isEntryAlreadyQueued(const Protos::Common::Entry& localEntry)
 {
-   QMap<std::string, Download*>::const_iterator i = this->downloadsIndexedByName.constFind(localEntry.name());
+   QMultiMap<std::string, Download*>::const_iterator i = this->downloadsIndexedByName.constFind(localEntry.name());
 
    while (i != this->downloadsIndexedByName.constEnd() && i.key() == localEntry.name())
    {
@@ -299,13 +299,15 @@ QList<QSharedPointer<IChunkDownloader>> DownloadQueue::getTheOldestUnfinishedChu
 {
    QList<QSharedPointer<IChunkDownloader>> unfinishedChunks;
 
-   for (QMutableMapIterator<QTime, FileDownload*> i(this->downloadsSortedByTime); i.hasNext() && unfinishedChunks.size() < n;)
+   for (auto i = this->downloadsSortedByTime.begin(); i != this->downloadsSortedByTime.end() && unfinishedChunks.size() < n;)
    {
-      i.next();
       if (i.value()->getStatus() == COMPLETE || i.value()->getStatus() == DELETED)
-         i.remove();
+         i = this->downloadsSortedByTime.erase(i);
       else
+      {
          i.value()->getUnfinishedChunks(unfinishedChunks, n - unfinishedChunks.size());
+         ++i;
+      }
    }
 
    return unfinishedChunks;

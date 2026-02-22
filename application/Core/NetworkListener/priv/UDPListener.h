@@ -23,10 +23,12 @@
 #include <QUdpSocket>
 #include <QTimer>
 #include <QSharedPointer>
+#include <QHash>
+#include <QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 #include <QtNetwork/QUdpSocket>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
 
 #include <google/protobuf/message.h>
 
@@ -88,6 +90,11 @@ namespace NL
       int writeMessageToBuffer(Common::MessageHeader::MessageType type, const google::protobuf::Message& message);
       Common::MessageHeader readDatagramToBuffer(QUdpSocket& socket, QHostAddress& peerAddress);
 
+      struct ImAliveIpStats {
+         int count = 0;        // messages received in the current 60-second window
+         qint64 banUntilMs = 0; // epoch-ms timestamp; 0 means not banned
+      };
+
       const int MAX_UDP_DATAGRAM_PAYLOAD_SIZE;
 
       char buffer[BUFFER_SIZE]; // Buffer used when sending or receiving datagram.
@@ -105,7 +112,6 @@ namespace NL
       QUdpSocket multicastSocket;
       QUdpSocket unicastSocket;
 
-      MTRand mtrand;
       quint64 currentIMAliveTag;
       QList<QSharedPointer<DM::IChunkDownloader>> currentChunkDownloaders;
       enum HashRequestType
@@ -114,6 +120,9 @@ namespace NL
          OLDEST_HASHES
       };
       HashRequestType nextHashRequestType;
+
+      QHash<QHostAddress, ImAliveIpStats> imAliveSenderStats; // per-IP flood mitigation state
+      qint64 imAliveWindowStartMs; // epoch-ms timestamp when the current 60-second count window started
 
       QTimer timerIMAlive;
       QSharedPointer<LM::ILogger> loggerIMAlive; // A logger especially for the IMAlive message.

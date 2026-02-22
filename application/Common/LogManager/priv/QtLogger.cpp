@@ -33,7 +33,11 @@ using namespace LM;
   * will create its own handle and discard the current one.
   */
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+void handler(QtMsgType type, const QMessageLogContext&, const QString& msg)
+#else
 void handler(QtMsgType type, const char* msg)
+#endif
 {
    Severity s =
          type == QtDebugMsg ? SV_DEBUG :
@@ -41,7 +45,11 @@ void handler(QtMsgType type, const char* msg)
          type == QtCriticalMsg ? SV_ERROR :
          type == QtFatalMsg ? SV_FATAL_ERROR : SV_UNKNOWN;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
    QtLogger::me.log(msg, s);
+#else
+   QtLogger::me.log(msg, s);
+#endif
 }
 
 const QtLogger QtLogger::me;
@@ -52,7 +60,11 @@ const QtLogger QtLogger::me;
   */
 void QtLogger::initMsgHandler()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+   qInstallMessageHandler(handler);
+#else
    qInstallMsgHandler(handler);
+#endif
 }
 
 QtLogger::QtLogger() :

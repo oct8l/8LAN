@@ -58,7 +58,7 @@
 #  define QT_QTSERVICE_EXPORT
 #endif
 
-class QStringList;
+#include <QStringList>
 class QtServiceControllerPrivate;
 
 class QT_QTSERVICE_EXPORT QtServiceController

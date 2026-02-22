@@ -26,7 +26,7 @@
 #include <QList>
 #include <QLocale>
 
-#include <Libs/MersenneTwister.h>
+#include <QRandomGenerator>
 
 #include <google/protobuf/message.h>
 
@@ -128,8 +128,6 @@ namespace RCM
 
       QList<QSharedPointer<NL::ISearch>> currentSearches;
       QList<QSharedPointer<PM::IGetEntriesResult>> getEntriesResults;
-
-      MTRand mtrand;
 
       bool authenticated;
       quint64 saltChallenge;

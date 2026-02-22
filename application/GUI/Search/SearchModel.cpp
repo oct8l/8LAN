@@ -43,11 +43,11 @@ SearchModel::SearchModel(QSharedPointer<RCC::ICoreConnection> coreConnection, co
    this->root = new SearchTree();
 
    this->timerProgress.setInterval(SETTINGS.get<quint32>("search_time") / NB_SIGNAL_PROGRESS);
-   connect(&this->timerProgress, SIGNAL(timeout()), this, SLOT(sendNextProgress()));
+   connect(&this->timerProgress, &QTimer::timeout, this, &SearchModel::sendNextProgress);
 
    this->timerTimeout.setInterval(SETTINGS.get<quint32>("search_time"));
    this->timerTimeout.setSingleShot(true);
-   connect(&this->timerTimeout, SIGNAL(timeout()), this, SLOT(stopSearching()));
+   connect(&this->timerTimeout, &QTimer::timeout, this, &SearchModel::stopSearching);
 }
 
 SearchModel::~SearchModel()
@@ -69,7 +69,11 @@ void SearchModel::search(const QString& terms)
       return;
 
    this->searchResult = this->coreConnection->search(terms);
-   connect(this->searchResult.data(), SIGNAL(result(const Protos::Common::FindResult&)), this, SLOT(result(const Protos::Common::FindResult&)));
+   connect(
+      this->searchResult.data(),
+      &RCC::ISearchResult::result,
+      this,
+      static_cast<void (SearchModel::*)(const Protos::Common::FindResult&)>(&SearchModel::result));
    // We don't use the 'timout' signal from 'ISearchResult', not useful.
    this->searchResult->start();
 
@@ -231,7 +235,7 @@ void SearchModel::result(const Protos::Common::FindResult& findResult)
    QList<const Protos::Common::FindResult_EntryLevel*> sortedEntries;
    for (int i = 0; i < findResult.entry_size(); i++)
       sortedEntries << &findResult.entry(i);
-   qSort(sortedEntries.begin(), sortedEntries.end(), &findEntryLessThan);
+   std::sort(sortedEntries.begin(), sortedEntries.end(), &findEntryLessThan);
 
    int currentIndex = 0;
 
@@ -475,6 +479,4 @@ bool SearchModel::SearchTree::isSameAs(const Protos::Common::Entry& otherEntry) 
 
    return true;
 }
-
-
 

@@ -19,6 +19,9 @@
 #ifndef FILEMANAGER_WORDINDEX_H
 #define FILEMANAGER_WORDINDEX_H
 
+#include <algorithm>
+#include <vector>
+
 #include <QList>
 #include <QString>
 #include <QChar>
@@ -65,7 +68,7 @@ namespace FM
 
    private:
       Node<T> root;
-      mutable QMutex mutex;
+      mutable QRecursiveMutex mutex;
    };
 }
 
@@ -77,14 +80,14 @@ const int WordIndex<T>::MIN_WORD_SIZE_PARTIAL_MATCH(3);
 
 template<typename T>
 WordIndex<T>::WordIndex() :
-   mutex(QMutex::Recursive)
+   mutex()
 {}
 
 template<typename T>
 void WordIndex<T>::addItem(const QString& word, const T& item)
 {
    QMutexLocker locker(&this->mutex);
-   this->root.addItem(&word, item);
+   this->root.addItem(word, item);
 }
 
 template<typename T>
@@ -92,7 +95,7 @@ void WordIndex<T>::addItem(const QStringList& words, const T& item)
 {
    QMutexLocker locker(&this->mutex);
    for (QStringListIterator i(words); i.hasNext();)
-      this->root.addItem(&i.next(), item);
+      this->root.addItem(i.next(), item);
 }
 
 template<typename T>
@@ -115,7 +118,7 @@ void WordIndex<T>::renameItem(const QString& oldWord, const QString& newWord, co
 {
    QMutexLocker locker(&this->mutex);
    this->root.rmItem(oldWord, item);
-   this->root.addItem(&newWord, item);
+   this->root.addItem(newWord, item);
 }
 
 template<typename T>
@@ -125,7 +128,7 @@ void WordIndex<T>::renameItem(const QStringList& oldWords, const QStringList& ne
    for (QStringListIterator i(oldWords); i.hasNext();)
       this->root.rmItem(i.next(), item);
    for (QStringListIterator i(newWords); i.hasNext();)
-      this->root.addItem(&i.next(), item);
+      this->root.addItem(i.next(), item);
 }
 
 /**
@@ -152,8 +155,11 @@ QList<NodeResult<T>> WordIndex<T>::search(const QStringList& words, int maxNbRes
    // Launch a search for each term.
    QVector<QSet<NodeResult<T>>> results(N);
    for (int i = 0; i < N; i++)
+   {
       // We can only limit the number of result for one term. When there is more than one term and thus some results set, say [a, b, c] for example, some good result may be contained in intersect, for example a & b or a & c.
-      results[i] += this->search(words[i], N == 1 ? maxNbResult : -1).toSet();
+      const QList<NodeResult<T>> searchResult = this->search(words[i], N == 1 ? maxNbResult : -1);
+      results[i].unite(QSet<NodeResult<T>>(searchResult.cbegin(), searchResult.cend()));
+   }
 
    QList<NodeResult<T>> finalResult;
 
@@ -169,7 +175,7 @@ QList<NodeResult<T>> WordIndex<T>::search(const QStringList& words, int maxNbRes
    for (int i = 0; i < N && finalResult.size() < maxNbResult; i++)
    {
       const int NB_INTERSECTS = N - i; // Number of set intersected.
-      int intersect[NB_INTERSECTS]; // A array of the results wich will be intersected.
+      std::vector<int> intersect(NB_INTERSECTS); // A array of the results wich will be intersected.
       for (int j = 0; j < NB_INTERSECTS; j++)
          intersect[j] = j;
 
@@ -202,7 +208,7 @@ QList<NodeResult<T>> WordIndex<T>::search(const QStringList& words, int maxNbRes
             const_cast<NodeResult<T>&>(k.next()).level += level;
 
          // Sort by level.
-         nodesToSort << currentLevelSet.toList();
+         nodesToSort << currentLevelSet.values();
 
          // Define positions of each intersect term.
          for (int k = NB_INTERSECTS - 1; k >= 0; k--)
@@ -217,7 +223,7 @@ QList<NodeResult<T>> WordIndex<T>::search(const QStringList& words, int maxNbRes
          level += 1;
       }
 
-      qSort(nodesToSort); // Sort by level
+      std::sort(nodesToSort.begin(), nodesToSort.end()); // Sort by level
 
       finalResult << nodesToSort;
 

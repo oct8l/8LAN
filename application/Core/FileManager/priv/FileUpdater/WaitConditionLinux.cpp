@@ -53,7 +53,10 @@ WaitConditionLinux::~WaitConditionLinux()
 void WaitConditionLinux::release()
 {
    L_DEBU(QString("WaitConditionLinux::release : begin write in pipe for read in fd=%1").arg(this->pfd[0]));
-   write(this->pfd[1], "",1);
+   const char wakeByte = '\0';
+   const ssize_t written = write(this->pfd[1], &wakeByte, sizeof(wakeByte));
+   if (written != static_cast<ssize_t>(sizeof(wakeByte)))
+      L_WARN(QString("WaitConditionLinux::release : unable to write wake byte (fd=%1)").arg(this->pfd[1]));
    L_DEBU(QString("WaitConditionLinux::release : end write in pipe for read in fd=%1").arg(this->pfd[0]));
 
    this->released = true;
@@ -96,4 +99,3 @@ int WaitConditionLinux::getFd()
 {
    return this->pfd[0];
 }
-

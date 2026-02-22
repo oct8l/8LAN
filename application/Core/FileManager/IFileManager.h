@@ -19,6 +19,7 @@
 #ifndef FILEMANAGER_IFILEMANAGER_H
 #define FILEMANAGER_IFILEMANAGER_H
 
+#include <QObject>
 #include <QStringList>
 #include <QBitArray>
 #include <QPair>

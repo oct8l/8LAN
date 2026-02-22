@@ -24,6 +24,7 @@
 #include <QDateTime>
 #include <QObject>
 #include <QString>
+#include <QStringView>
 #include <QList>
 #include <QMutableListIterator>
 
@@ -64,8 +65,8 @@ namespace Common
       static QStringList splitInWords(const QString& words);
       static int strcmpi(const std::string& s1, const std::string& s2);
 
-      static inline int commonPrefix(const QString& s1, const QString& s2) { return Global::commonPrefix(&s1, &s2); }
-      static inline int commonPrefix(const QStringRef& s1, const QStringRef& s2);
+      static inline int commonPrefix(const QString& s1, const QString& s2) { return Global::commonPrefix(QStringView(s1), QStringView(s2)); }
+      static inline int commonPrefix(QStringView s1, QStringView s2);
 
       static quint32 hashStringToInt(const QString& str);
 
@@ -102,7 +103,7 @@ namespace Common
    };
 }
 
-inline int Common::Global::commonPrefix(const QStringRef& s1, const QStringRef& s2)
+inline int Common::Global::commonPrefix(QStringView s1, QStringView s2)
 {
    int i = 0;
    while (i < s1.size() && i < s2.size())

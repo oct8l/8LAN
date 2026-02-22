@@ -46,7 +46,7 @@ UploadManager::UploadManager(QSharedPointer<PM::IPeerManager> peerManager) :
    peerManager(peerManager), threadPool(static_cast<int>(SETTINGS.get<quint32>("upload_min_nb_thread")), SETTINGS.get<quint32>("upload_thread_lifetime"))
 {
    this->threadPool.setStackSize(MIN_UPLOAD_THREAD_STACK_SIZE + SETTINGS.get<quint32>("buffer_size_reading"));
-   connect(this->peerManager.data(), SIGNAL(getChunk(QSharedPointer<FM::IChunk>, int, QSharedPointer<PM::ISocket>)), this, SLOT(getChunk(QSharedPointer<FM::IChunk>, int, QSharedPointer<PM::ISocket>)), Qt::DirectConnection);
+   connect(this->peerManager.data(), &PM::IPeerManager::getChunk, this, &UploadManager::getChunk, Qt::DirectConnection);
 }
 
 UploadManager::~UploadManager()
@@ -76,7 +76,7 @@ int UploadManager::getUploadRate()
 void UploadManager::getChunk(const QSharedPointer<FM::IChunk>& chunk, int offset, const QSharedPointer<PM::ISocket>& socket)
 {
    QSharedPointer<ChunkUploader> upload(new ChunkUploader(chunk, offset, socket, this->transferRateCalculator));
-   connect(upload.data(), SIGNAL(timeout()), this, SLOT(uploadTimeout()));
+   connect(upload.data(), &Common::Timeoutable::timeout, this, &UploadManager::uploadTimeout);
    this->uploads << upload;
    this->threadPool.run(upload.toWeakRef());
 }

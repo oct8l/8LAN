@@ -34,7 +34,7 @@
 TestServer::TestServer(QSharedPointer<PM::IPeerManager> peerManager, int port) :
    peerManager(peerManager)
 {
-   connect(&this->server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+   connect(&this->server, &QTcpServer::newConnection, this, &TestServer::newConnection);
    QVERIFY(this->server.listen(QHostAddress::Any, port));
 }
 
@@ -42,6 +42,6 @@ void TestServer::newConnection()
 {
    qDebug() << "TestServer::newConnection()";
    QTcpSocket* socket = this->server.nextPendingConnection();
-   connect(socket, SIGNAL(disconnected()), socket, SLOT(deleteLater()));
+   connect(socket, &QAbstractSocket::disconnected, socket, &QObject::deleteLater);
    this->peerManager->newConnection(socket);
 }

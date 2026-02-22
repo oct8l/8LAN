@@ -123,7 +123,7 @@ namespace FM
       QFile* fileInReadMode;
       QMutex writeLock; ///< Protect the file from concurrent access from different downloaders.
       QMutex readLock; ///< Protect the file from concurrent access from different uploaders.
-      mutable QMutex mutex;
+      mutable QRecursiveMutex mutex;
    };
 
    /**

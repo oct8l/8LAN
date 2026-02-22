@@ -45,7 +45,7 @@ GetHashesResult::~GetHashesResult()
 
    L_DEBU("GetHashesResult::~GetHashesResult()");
 
-   disconnect(&this->cache, SIGNAL(chunkHashKnown(QSharedPointer<Chunk>)), this, SLOT(chunkHashKnown(QSharedPointer<Chunk>)));
+   disconnect(&this->cache, &Cache::chunkHashKnown, this, &GetHashesResult::chunkHashKnown);
 }
 
 /**
@@ -69,7 +69,7 @@ Protos::Core::GetHashesResult GetHashesResult::start()
       return result;
    }
 
-   connect(&this->cache, SIGNAL(chunkHashKnown(QSharedPointer<Chunk>)), this, SLOT(chunkHashKnown(QSharedPointer<Chunk>)), Qt::DirectConnection);
+   connect(&this->cache, &Cache::chunkHashKnown, this, &GetHashesResult::chunkHashKnown, Qt::DirectConnection);
    this->nbHash = chunks.size() - this->fileEntry.chunk_size();
    this->lastHashNumSent = this->fileEntry.chunk_size() - 1;
 
@@ -96,7 +96,7 @@ Protos::Core::GetHashesResult GetHashesResult::start()
    return result;
 }
 
-void GetHashesResult::chunkHashKnown(QSharedPointer<Chunk> chunk)
+void GetHashesResult::chunkHashKnown(const QSharedPointer<Chunk>& chunk)
 {
    if (chunk->isOwnedBy(this->file))
    {
@@ -105,7 +105,7 @@ void GetHashesResult::chunkHashKnown(QSharedPointer<Chunk> chunk)
    }
 }
 
-void GetHashesResult::sendNextHash(QSharedPointer<Chunk> chunk)
+void GetHashesResult::sendNextHash(const QSharedPointer<Chunk>& chunk)
 {
    if (chunk->getNum() <= this->lastHashNumSent)
       return;
@@ -113,7 +113,7 @@ void GetHashesResult::sendNextHash(QSharedPointer<Chunk> chunk)
    this->lastHashNumSent = chunk->getNum();
 
    if (!--this->nbHash)
-      disconnect(&this->cache, SIGNAL(chunkHashKnown(QSharedPointer<Chunk>)), this, SLOT(chunkHashKnown(QSharedPointer<Chunk>)));
+      disconnect(&this->cache, &Cache::chunkHashKnown, this, &GetHashesResult::chunkHashKnown);
 
    emit nextHash(chunk->getHash());
 }

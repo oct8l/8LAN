@@ -19,6 +19,8 @@
 #include <priv/Logger.h>
 using namespace LM;
 
+#include <algorithm>
+
 #include <QtDebug>
 #include <QThread>
 #include <QSharedPointer>
@@ -51,7 +53,7 @@ QWeakPointer<LoggerHook> LoggerHooks::operator[] (int i)
 void LoggerHooks::removeDeletedHooks()
 {
    for (QMutableListIterator<QWeakPointer<LoggerHook>> i(this->loggerHooks); i.hasNext();)
-      if (!i.next().data())
+      if (i.next().toStrongRef().isNull())
          i.remove();
 }
 
@@ -59,7 +61,7 @@ void LoggerHooks::removeDeletedHooks()
 
 QTextStream Logger::out;
 QFile Logger::file;
-QMutex Logger::mutex(QMutex::Recursive);
+QRecursiveMutex Logger::mutex;
 QString Logger::logDirName;
 
 LoggerHooks Logger::loggerHooks;
@@ -103,12 +105,16 @@ bool Logger::log(const QString& message, Severity severity, const char* filename
 
    // Say to all hooks there is a new message.
    for (int i = 0; i < this->loggerHooks.size(); i++)
-      this->loggerHooks[i].data()->newMessage(entry);
+   {
+      const QSharedPointer<LoggerHook> loggerHook = this->loggerHooks[i].toStrongRef();
+      if (!loggerHook.isNull())
+         loggerHook->newMessage(entry);
+   }
 
    if (!Logger::createFileLog())
       return false;
 
-   Logger::out << entry->toStrLine() << endl;
+   Logger::out << entry->toStrLine() << Qt::endl;
 
    return true;
 }
@@ -146,7 +152,7 @@ bool Logger::createFileLog()
 
          if (!appDir.exists(logDirName) && !appDir.mkdir(logDirName))
          {
-            outErr << "Error, cannot create log directory : " << appDir.absoluteFilePath(logDirName) << endl;
+            outErr << "Error, cannot create log directory : " << appDir.absoluteFilePath(logDirName) << Qt::endl;
             return false;
          }
          else
@@ -158,20 +164,22 @@ bool Logger::createFileLog()
             Logger::file.setFileName(logDir.absoluteFilePath(filename));
             if (!Logger::file.open(QIODevice::WriteOnly))
             {
-               outErr << "Error, cannot create log file : " << logDir.absoluteFilePath(filename) << endl;
+               outErr << "Error, cannot create log file : " << logDir.absoluteFilePath(filename) << Qt::endl;
                return false;
             }
             else
             {
                Logger::deleteOldestLog(logDir);
                Logger::out.setDevice(&Logger::file);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                Logger::out.setCodec("UTF-8");
+#endif
             }
          }
       }
       catch(Common::Global::UnableToGetFolder& e)
       {
-         outErr << "Error, cannot create the application data directory: " << e.errorMessage << endl;
+         outErr << "Error, cannot create the application data directory: " << e.errorMessage << Qt::endl;
          return false;
       }
    }
@@ -182,14 +190,14 @@ bool Logger::createFileLog()
 void Logger::deleteOldestLog(const QDir& logDir)
 {
    QList<QFileInfo> entries;
-   foreach (QFileInfo entry, logDir.entryInfoList())
+   for (const auto& entry : logDir.entryInfoList())
    {
       if (entry.fileName() == "." || entry.fileName() == ".." || !entry.fileName().endsWith(".log"))
          continue;
       if (entry.isFile())
          entries.append(entry);
    }
-   qSort(entries.begin(), entries.end(), fileInfoLessThan);
+   std::sort(entries.begin(), entries.end(), fileInfoLessThan);
 
    while (entries.size() > NB_LOGFILE)
       QFile::remove(entries.takeFirst().absoluteFilePath());

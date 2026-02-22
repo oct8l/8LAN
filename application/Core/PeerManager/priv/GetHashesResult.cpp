@@ -32,14 +32,14 @@ void GetHashesResult::start()
 {
    Protos::Core::GetHashes message;
    message.mutable_file()->CopyFrom(this->file);
-   connect(this->socket.data(), SIGNAL(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), this, SLOT(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), Qt::DirectConnection);
+   connect(this->socket.data(), &Common::MessageSocket::newMessage, this, &GetHashesResult::newMessage, Qt::DirectConnection);
    socket->send(Common::MessageHeader::CORE_GET_HASHES, message);
    this->startTimer();
 }
 
 void GetHashesResult::doDeleteLater()
 {
-   disconnect(this->socket.data(), SIGNAL(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)), this, SLOT(newMessage(Common::MessageHeader::MessageType, const google::protobuf::Message&)));
+   disconnect(this->socket.data(), &Common::MessageSocket::newMessage, this, &GetHashesResult::newMessage);
    this->socket->finished();
    this->socket.clear();
    this->deleteLater();

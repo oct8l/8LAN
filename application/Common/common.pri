@@ -10,12 +10,12 @@ CONFIG(debug, debug|release) {
    }
 }
 
-# C++11
+# C++17 (required by modern protobuf/absl)
 win32 {
    # For mingw32.
-   QMAKE_CXXFLAGS += -std=gnu++0x
+   QMAKE_CXXFLAGS += -std=gnu++17
 } else {
-   QMAKE_CXXFLAGS += -std=c++0x
+   QMAKE_CXXFLAGS += -std=c++17
 }
 
 CONFIG += exceptions rtti

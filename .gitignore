@@ -18,4 +18,5 @@ output/
 /doc/doxygen/html
 qrc_*.cpp
 TODO
+.env
 *.session

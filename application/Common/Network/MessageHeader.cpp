@@ -132,14 +132,14 @@ MessageHeader MessageHeader::readHeader(QIODevice& device, bool skipReadData)
    if (device.bytesAvailable() < HEADER_SIZE)
       throw notEnoughDataException();
 
-   char data[HEADER_SIZE];
+   QByteArray data(HEADER_SIZE, '\0');
 
    if (skipReadData)
-      device.read(data, HEADER_SIZE);
+      device.read(data.data(), HEADER_SIZE);
    else
-      device.peek(data, HEADER_SIZE);
+      device.peek(data.data(), HEADER_SIZE);
 
-   return MessageHeader::readHeader(data);
+   return MessageHeader::readHeader(data.constData());
 }
 
 /**

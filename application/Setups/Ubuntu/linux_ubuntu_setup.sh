@@ -22,14 +22,17 @@ CORE_FILE=$DIR/Core/output/release/D-LAN.Core
 GUI_FILE=$DIR/GUI/output/release/D-LAN.GUI
 ICON_FILE=$DIR/Common/ressources/icon.ico
 
-# Default dependencies, it may change depending the architecture and the Linux distribution.
-DEP_QTCORE=">= 4:4.8"
-DEP_QTGUI=">= 4:4.8"
-DEP_QTNETWORK=">= 4:4.8"
-DEP_PROTOBUF=">= 2.4.1"
-DEP_LIBC=">= 2.15"
-DEP_LIBSTDCPP=">= 4.6.3"
-DEP_LIBGCC=">= 1:4.6.3"
+# Default dependencies for modern Qt5/protobuf3 packaging.
+# They may still be adjusted for distro-specific backports.
+DEP_QTCORE=">= 5.15"
+DEP_QTGUI=">= 5.15"
+DEP_QTNETWORK=">= 5.15"
+DEP_QTWIDGETS=">= 5.15"
+DEP_QTSCRIPT=">= 5.15"
+DEP_PROTOBUF=">= 3.12"
+DEP_LIBC=">= 2.31"
+DEP_LIBSTDCPP=">= 10"
+DEP_LIBGCC=">= 10"
 
 sudo rm -Rf $DEB_DIR
 mkdir -p $DESKTOP_DIR $STYLES_DIR $I18N_DIR $ICON_16_DIR $ICON_24_DIR $ICON_32_DIR $ICON_48_DIR $ICON_64_DIR $ICON_128_DIR $ICON_256_DIR
@@ -65,6 +68,8 @@ select arch in "i386" "amd64" "armhf"; do
     sed -i "s/_DEP_QTCORE_/$DEP_QTCORE/g" $CONTROL
     sed -i "s/_DEP_QTGUI_/$DEP_QTGUI/g" $CONTROL
     sed -i "s/_DEP_QTNETWORK_/$DEP_QTNETWORK/g" $CONTROL
+    sed -i "s/_DEP_QTWIDGETS_/$DEP_QTWIDGETS/g" $CONTROL
+    sed -i "s/_DEP_QTSCRIPT_/$DEP_QTSCRIPT/g" $CONTROL
     sed -i "s/_DEP_PROTOBUF_/$DEP_PROTOBUF/g" $CONTROL
     sed -i "s/_DEP_LIBC_/$DEP_LIBC/g" $CONTROL
     sed -i "s/_DEP_LIBSTDCPP_/$DEP_LIBSTDCPP/g" $CONTROL

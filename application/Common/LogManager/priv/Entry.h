@@ -21,7 +21,7 @@
 
 #include <QString>
 #include <QDateTime>
-#include <QRegExp>
+#include <QRegularExpression>
 
 #include <IEntry.h>
 
@@ -32,7 +32,7 @@ namespace LM
       static const QString DATE_TIME_FORMAT;
       static const QString DATE_TIME_FORMAT_WITH_MS;
       static const QString SEVERITIES_STR[];
-      static QRegExp lineRegExp;
+      static QRegularExpression lineRegExp;
 
    public:
       Entry(const QString& line);

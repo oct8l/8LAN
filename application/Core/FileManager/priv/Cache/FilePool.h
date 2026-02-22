@@ -22,7 +22,7 @@
 #include <QObject>
 #include <QMutex>
 #include <QFile>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QScopedPointer>
 
@@ -52,7 +52,7 @@ namespace FM
       {
          QFile* file;
          QIODevice::OpenMode mode;
-         QTime releasedTime; // Null if not released.
+         QElapsedTimer releasedTime; // Invalid if not released.
       };
 
       QList<OpenedFile> files;

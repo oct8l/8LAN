@@ -46,7 +46,7 @@ Settings& Settings::getInstance()
 Settings::Settings() :
    filename("settings.txt"), // The default name.
    settings(0),
-   mutex(QMutex::Recursive)
+   mutex()
 {
 }
 
@@ -443,7 +443,11 @@ void Settings::set(const QString& name, const google::protobuf::Message& message
    if (fieldDescriptor->type() != google::protobuf::FieldDescriptor::TYPE_MESSAGE ||
        fieldDescriptor->type() == google::protobuf::FieldDescriptor::TYPE_MESSAGE && fieldDescriptor->message_type()->full_name() != message.GetTypeName())
    {
-      printErrorBadType(fieldDescriptor, QString::fromStdString(message.GetTypeName()));
+      const auto messageTypeName = message.GetTypeName();
+      printErrorBadType(
+         fieldDescriptor,
+         QString::fromUtf8(messageTypeName.data(), static_cast<int>(messageTypeName.size()))
+      );
       return;
    }
 
@@ -566,7 +570,8 @@ void Settings::get(const google::protobuf::FieldDescriptor* fieldDescriptor, dou
 void Settings::get(const google::protobuf::FieldDescriptor* fieldDescriptor, QString& value) const
 {
    Q_ASSERT(fieldDescriptor);
-   value = QString::fromUtf8(this->settings->GetReflection()->GetString(*this->settings, fieldDescriptor).data());
+   const std::string str = this->settings->GetReflection()->GetString(*this->settings, fieldDescriptor);
+   value = QString::fromUtf8(str.data(), static_cast<int>(str.size()));
 }
 
 void Settings::get(const google::protobuf::FieldDescriptor* fieldDescriptor, QByteArray& value) const
@@ -640,8 +645,15 @@ void Settings::setDefaultValues()
             this->settings->GetReflection()->SetDouble(this->settings, fieldDescriptor, fieldDescriptor->default_value_double());
             break;
          case google::protobuf::FieldDescriptor::TYPE_STRING:
-            this->settings->GetReflection()->SetString(this->settings, fieldDescriptor, fieldDescriptor->default_value_string());
+         {
+            const auto defaultValue = fieldDescriptor->default_value_string();
+            this->settings->GetReflection()->SetString(
+               this->settings,
+               fieldDescriptor,
+               std::string(defaultValue.data(), static_cast<size_t>(defaultValue.size()))
+            );
             break;
+         }
          default:
             break;
          }
@@ -688,15 +700,15 @@ void Settings::rmAll()
 
 void Settings::printError(const QString& name)
 {
-   QTextStream(stderr) << name << endl;
+   QTextStream(stderr) << name << Qt::endl;
 }
 
 void Settings::printErrorNameNotFound(const QString& name)
 {
-   QTextStream(stderr) << QString("Settings : name \"%1\" doesn't exist").arg(name) << endl;
+   QTextStream(stderr) << QString("Settings : name \"%1\" doesn't exist").arg(name) << Qt::endl;
 }
 
 void Settings::printErrorBadType(const google::protobuf::FieldDescriptor* field, const QString& excepted)
 {
-   QTextStream(stderr) << QString("Settings : bad type, field name = \"%1\", expected type : \"%2\"").arg(ProtoHelper::getStr(*field, &google::protobuf::FieldDescriptor::name)).arg(excepted) << endl;
+   QTextStream(stderr) << QString("Settings : bad type, field name = \"%1\", expected type : \"%2\"").arg(ProtoHelper::getStr(*field, &google::protobuf::FieldDescriptor::name)).arg(excepted) << Qt::endl;
 }

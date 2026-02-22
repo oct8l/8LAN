@@ -76,11 +76,9 @@ void TaskbarImplWin::setOverlayIcon(const QIcon& icon, const QString& descriptio
    if (!this->winHandle || !this->taskbarInterface)
       return;
 
-   HICON overlayIcon = icon.isNull() ? NULL : icon.pixmap(48).toWinHICON();
+   Q_UNUSED(icon);
+   HICON overlayIcon = NULL;
    this->taskbarInterface->SetOverlayIcon(this->winHandle, overlayIcon, description.toStdWString().c_str());
-
-   if (overlayIcon)
-      DestroyIcon(overlayIcon);
 }
 
 void TaskbarImplWin::setWinHandle(HWND winHandle)
@@ -111,4 +109,3 @@ void TaskbarImplWin::initTaskbarButton()
       }
    }
 }
-

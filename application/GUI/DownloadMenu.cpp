@@ -48,7 +48,7 @@ void DownloadMenu::show(const QPoint& globalPosition)
          tr("Download selected items to the first directory folder with enough free space"),
          &menu
       );
-      connect(actionDownload, SIGNAL(triggered()), this, SIGNAL(download()));
+      connect(actionDownload, &QAction::triggered, this, &DownloadMenu::download);
       menu.addAction(actionDownload);
    }
 
@@ -62,7 +62,7 @@ void DownloadMenu::show(const QPoint& globalPosition)
       );
       sharedDir.path = "/"; // A bit dirty, path semantic change, it's now the relative path (not the absolute path).
       action->setData(QVariant::fromValue(sharedDir));
-      connect(action, SIGNAL(triggered()), this, SLOT(actionTriggered()));
+      connect(action, &QAction::triggered, this, &DownloadMenu::actionTriggered);
       menu.addAction(action);
    }
 
@@ -71,7 +71,7 @@ void DownloadMenu::show(const QPoint& globalPosition)
       tr("Download selected items to . . ."),
       &menu
    );
-   connect(actionChooseAndDownload, SIGNAL(triggered()), this, SIGNAL(downloadTo()));
+   connect(actionChooseAndDownload, &QAction::triggered, this, static_cast<void (DownloadMenu::*)()>(&DownloadMenu::downloadTo));
    menu.addAction(actionChooseAndDownload);
 
    this->onShowMenu(menu);

@@ -6,8 +6,9 @@
   * All string are encoded in UTF-8.
   */
 
+syntax = "proto2";
+
 import "common.proto";
-import "core_settings.proto";
 
 package Protos.GUI;
 

@@ -1,0 +1,200 @@
+name: Phase 1 Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase1-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-build:
+    name: Linux Smoke Build (Non-Blocking)
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: bash .github/scripts/ci-linux-setup.sh
+
+      - name: Build components (debug + release)
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Upload Linux artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: d-lan-linux-phase1-${{ github.run_number }}
+          path: artifacts/linux
+          if-no-files-found: warn
+          retention-days: 14
+
+  macos-build:
+    name: macOS Smoke Build (Non-Blocking)
+    runs-on: macos-latest
+    continue-on-error: true
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: bash .github/scripts/ci-macos-setup.sh
+
+      - name: Build components (debug + release)
+        env:
+          # macOS: suppress .app bundle; produce plain Unix binaries like Linux does.
+          QMAKE_EXTRA_FLAGS: "CONFIG-=app_bundle"
+          ALLOW_PROTOCOL_BREAK: "1"
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Upload macOS artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: d-lan-macos-phase1-${{ github.run_number }}
+          path: artifacts/linux
+          if-no-files-found: warn
+          retention-days: 14
+
+  linux-qt6-build:
+    name: Linux Qt 6 Smoke Build (Non-Blocking)
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Qt 6 dependencies
+        run: bash .github/scripts/ci-linux-qt6-setup.sh
+
+      - name: Build components (release)
+        env:
+          QMAKE_BIN: qmake6
+          ACCEPT_QT6: "1"
+          ALLOW_PROTOCOL_BREAK: "1"
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Upload Linux Qt 6 artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: d-lan-linux-qt6-phase1-${{ github.run_number }}
+          path: artifacts/linux
+          if-no-files-found: warn
+          retention-days: 14
+
+  macos-qt6-build:
+    name: macOS Qt 6 Smoke Build (Non-Blocking)
+    runs-on: macos-latest
+    continue-on-error: true
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Qt 6 dependencies
+        run: bash .github/scripts/ci-macos-qt6-setup.sh
+
+      - name: Build components (release)
+        env:
+          QMAKE_EXTRA_FLAGS: "CONFIG-=app_bundle"
+          ACCEPT_QT6: "1"
+          ALLOW_PROTOCOL_BREAK: "1"
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Upload macOS Qt 6 artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: d-lan-macos-qt6-phase1-${{ github.run_number }}
+          path: artifacts/linux
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows-build:
+    name: Windows Build (MSYS2/MinGW)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup MSYS2 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          cache: true
+          install: >-
+            git
+            base-devel
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-qt5-base
+            mingw-w64-x86_64-qt5-tools
+            mingw-w64-x86_64-qt5-winextras
+            mingw-w64-x86_64-qt5-svg
+            mingw-w64-x86_64-qt5-declarative
+            mingw-w64-x86_64-protobuf
+
+      - name: Build components (debug + release)
+        shell: msys2 {0}
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+        run: BUILD_CONFIGS="release debug" bash .github/scripts/ci-windows-build.sh
+
+      - name: Smoke check artifacts (non-blocking)
+        if: always()
+        continue-on-error: true
+        shell: msys2 {0}
+        run: bash .github/scripts/ci-smoke-check.sh windows
+
+      - name: Upload Windows artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: d-lan-windows-phase1-${{ github.run_number }}
+          path: artifacts/windows
+          if-no-files-found: warn
+          retention-days: 14
