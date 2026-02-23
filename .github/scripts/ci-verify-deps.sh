@@ -13,7 +13,7 @@ fi
 
 qt_version="$("${QMAKE_BIN}" -query QT_VERSION 2>/dev/null || true)"
 if [[ -z "${qt_version}" ]]; then
-  qt_version="$("${QMAKE_BIN}" --version 2>/dev/null | awk '{print $NF}' | rg -m1 '^[0-9]+\.[0-9]+(\.[0-9]+)?$' || true)"
+  qt_version="$("${QMAKE_BIN}" --version 2>/dev/null | awk '{print $NF}' | grep -E -m1 '^[0-9]+\.[0-9]+(\.[0-9]+)?$' || true)"
 fi
 
 if [[ -z "${qt_version}" ]]; then

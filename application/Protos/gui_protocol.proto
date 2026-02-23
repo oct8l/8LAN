@@ -109,8 +109,8 @@ message State {
    
    optional Stats stats = 6;
    
-   optional Common.Interface.Address.Protocol listenAny = 8; // If this value is set then all the interfaces of the given protocol are listened. Otherwise see the following repeated 'interface' field.
-   repeated Common.Interface interface = 9;
+   optional Common.Interface.Address.Protocol listenAny = 8; // If this value is set then all the interfaces of the given protocol are listened. Otherwise see the following repeated 'interfaces' field.
+   repeated Common.Interface interfaces = 9;
 }
 
 // GUI -> Core

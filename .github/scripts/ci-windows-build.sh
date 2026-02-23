@@ -31,6 +31,16 @@ OBJDUMP_BIN="${OBJDUMP_BIN:-$(find_first_command x86_64-w64-mingw32-objdump objd
 HASH_BIN="${HASH_BIN:-$(find_first_command sha256sum shasum || true)}"
 CYGPATH_BIN="${CYGPATH_BIN:-$(find_first_command cygpath || true)}"
 
+# Detect Qt major version so we can set ACCEPT_QT6 and use correct tool flags.
+QT_MAJOR=""
+if [[ -n "${QMAKE_BIN}" ]]; then
+  _qt_ver="$("${QMAKE_BIN}" -query QT_VERSION 2>/dev/null || true)"
+  QT_MAJOR="${_qt_ver%%.*}"
+fi
+ACCEPT_QT6="${ACCEPT_QT6:-0}"
+[[ "${QT_MAJOR}" == "6" ]] && ACCEPT_QT6="1"
+export ACCEPT_QT6
+
 setup_artifact_logging() {
   mkdir -p "${ARTIFACTS_DIR}" "${LOG_DIR}"
   : > "${BUILD_LOG}"
@@ -327,8 +337,11 @@ collect_artifacts() {
   fi
 
   if [[ -n "${WINDEPLOYQT_BIN}" ]]; then
-    if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime --no-angle --no-translations "${portable_dir}/D-LAN.GUI.exe"; then
-      echo "windeployqt failed with --no-angle; retrying default deployment"
+    # --no-angle is Qt5-only; Qt6's windeployqt does not support it.
+    local windeployqt_extra=()
+    [[ "${QT_MAJOR}" != "6" ]] && windeployqt_extra+=(--no-angle)
+    if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime "${windeployqt_extra[@]}" --no-translations "${portable_dir}/D-LAN.GUI.exe"; then
+      echo "windeployqt failed; retrying without extra flags"
       if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime --no-translations "${portable_dir}/D-LAN.GUI.exe"; then
         echo "windeployqt failed; continuing without full Qt runtime auto-deployment"
       fi
@@ -379,11 +392,24 @@ package_artifacts() {
   } > "${packages_dir}/PACKAGES.txt"
 }
 
+clean_stale_makefiles() {
+  # Remove qmake-generated sub-project Makefiles so that the configured
+  # QMAKE_BIN will regenerate them rather than reusing stale ones from a
+  # previous Qt version.  The top-level "Makefile-<project>-<config>" files
+  # produced by build_component are always regenerated; only the sub-project
+  # ones need purging.
+  echo "Removing stale sub-project Makefiles"
+  find "${APP_DIR}" \( -name "Makefile" -o -name "Makefile.Debug" -o -name "Makefile.Release" \) -delete 2>/dev/null || true
+  # Also wipe compiled object files so linking picks up the correct Qt version.
+  find "${APP_DIR}" -type d -name ".tmp" | while IFS= read -r d; do rm -rf "${d}"; done
+}
+
 refresh_generated_protos
 generate_protos
 verify_generated_protos_idempotent
 verify_protocol_compatibility
 generate_translations
+clean_stale_makefiles
 build_all
 collect_artifacts
 package_artifacts

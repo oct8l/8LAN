@@ -728,7 +728,11 @@ protected:
 class QtServiceNativeEventFilter : public QAbstractNativeEventFilter
 {
 public:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    bool nativeEventFilter(const QByteArray&, void* message, qintptr* result) override
+#else
     bool nativeEventFilter(const QByteArray&, void* message, long* result) override
+#endif
     {
         MSG* msg = reinterpret_cast<MSG*>(message);
         if (!msg || (msg->message != WM_ENDSESSION) || !(msg->lParam & ENDSESSION_LOGOFF))

@@ -1,0 +1,357 @@
+name: Phase 1 Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create/update (example: 1.1.0beta16)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark release as prerelease"
+        required: true
+        default: true
+        type: boolean
+      draft:
+        description: "Create release as draft"
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-22.04
+    outputs:
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      draft: ${{ steps.meta.outputs.draft }}
+
+    steps:
+      - name: Resolve release metadata
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
+          INPUT_DRAFT: ${{ github.event.inputs.draft }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            release_tag="${REF_NAME}"
+            if [[ "${release_tag,,}" =~ (alpha|beta|rc) ]]; then
+              prerelease="true"
+            else
+              prerelease="false"
+            fi
+            draft="false"
+          else
+            release_tag="${INPUT_TAG}"
+            prerelease="${INPUT_PRERELEASE}"
+            draft="${INPUT_DRAFT}"
+          fi
+
+          if [[ -z "${release_tag}" ]]; then
+            echo "Release tag is required"
+            exit 1
+          fi
+
+          echo "release_tag=${release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=Phase 1 Build ${release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=${prerelease}" >> "${GITHUB_OUTPUT}"
+          echo "draft=${draft}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.meta.outputs.release_name }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          draft: ${{ steps.meta.outputs.draft }}
+          generate_release_notes: true
+
+  unix-build:
+    name: ${{ matrix.display_name }}
+    needs: prepare-release
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - display_name: Linux Build (Qt 5)
+            runner: ubuntu-22.04
+            platform: linux
+            qt: qt5
+            setup_script: .github/scripts/ci-linux-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: ""
+            accept_qt6: "0"
+          - display_name: macOS Build (Qt 5)
+            runner: macos-latest
+            platform: macos
+            qt: qt5
+            setup_script: .github/scripts/ci-macos-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: CONFIG-=app_bundle
+            accept_qt6: "0"
+          - display_name: Linux Build (Qt 6)
+            runner: ubuntu-22.04
+            platform: linux
+            qt: qt6
+            setup_script: .github/scripts/ci-linux-qt6-setup.sh
+            qmake_bin: qmake6
+            qmake_extra_flags: ""
+            accept_qt6: "1"
+          - display_name: macOS Build (Qt 6)
+            runner: macos-latest
+            platform: macos
+            qt: qt6
+            setup_script: .github/scripts/ci-macos-qt6-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: CONFIG-=app_bundle
+            accept_qt6: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: bash "${{ matrix.setup_script }}"
+
+      - name: Build components
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+          QMAKE_BIN: ${{ matrix.qmake_bin }}
+          QMAKE_EXTRA_FLAGS: ${{ matrix.qmake_extra_flags }}
+          ACCEPT_QT6: ${{ matrix.accept_qt6 }}
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Stage release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          cp artifacts/linux/packages/d-lan-linux-portable.tar.gz "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
+          cp artifacts/linux/packages/PACKAGES.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-PACKAGES.txt"
+          cp artifacts/linux/SHA256SUMS "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SHA256SUMS.txt"
+          cp artifacts/linux/BUILD_STATUS.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-BUILD_STATUS.txt"
+          cp artifacts/linux/SMOKE_STATUS.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SMOKE_STATUS.txt"
+
+      - name: Upload staged release assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assets-${{ matrix.platform }}-${{ matrix.qt }}
+          path: release-assets
+          if-no-files-found: error
+          retention-days: 7
+
+  windows-build:
+    name: Windows Build (${{ matrix.qt }})
+    needs: prepare-release
+    runs-on: windows-2022
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - qt: qt5
+            build_configs: release debug
+            qmake_bin: ""
+            lrelease_bin: ""
+            windeployqt_bin: ""
+            accept_qt6: "0"
+            install_packages: >-
+              git
+              base-devel
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-make
+              mingw-w64-x86_64-qt5-base
+              mingw-w64-x86_64-qt5-tools
+              mingw-w64-x86_64-qt5-winextras
+              mingw-w64-x86_64-qt5-svg
+              mingw-w64-x86_64-qt5-declarative
+              mingw-w64-x86_64-protobuf
+          - qt: qt6
+            build_configs: release
+            qmake_bin: qmake6
+            lrelease_bin: lrelease
+            windeployqt_bin: windeployqt6
+            accept_qt6: "1"
+            install_packages: >-
+              git
+              base-devel
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-make
+              mingw-w64-x86_64-qt6-base
+              mingw-w64-x86_64-qt6-tools
+              mingw-w64-x86_64-qt6-svg
+              mingw-w64-x86_64-qt6-declarative
+              mingw-w64-x86_64-protobuf
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup MSYS2 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          cache: true
+          install: ${{ matrix.install_packages }}
+
+      - name: Build components
+        shell: msys2 {0}
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+          BUILD_CONFIGS: ${{ matrix.build_configs }}
+          QMAKE_BIN: ${{ matrix.qmake_bin }}
+          LRELEASE_BIN: ${{ matrix.lrelease_bin }}
+          WINDEPLOYQT_BIN: ${{ matrix.windeployqt_bin }}
+          ACCEPT_QT6: ${{ matrix.accept_qt6 }}
+        run: bash .github/scripts/ci-windows-build.sh
+
+      - name: Check signing configuration
+        id: signing-config
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_CERT_BASE64: ${{ secrets.WINDOWS_SIGNING_CERT_BASE64 }}
+          WINDOWS_SIGNING_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERT_PASSWORD }}
+        run: |
+          $enabled = "false"
+          if (![string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERT_BASE64) -and ![string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_CERT_PASSWORD)) {
+            $enabled = "true"
+          }
+          "enabled=$enabled" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+          if ($enabled -eq "false") {
+            Write-Host "Windows signing secrets are not configured; building unsigned artifacts."
+          }
+
+      - name: Sign Windows binaries
+        if: steps.signing-config.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_CERT_BASE64: ${{ secrets.WINDOWS_SIGNING_CERT_BASE64 }}
+          WINDOWS_SIGNING_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERT_PASSWORD }}
+          WINDOWS_SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_SIGNING_TIMESTAMP_URL }}
+        run: |
+          $certPath = Join-Path $env:RUNNER_TEMP "d-lan-codesign.pfx"
+          $timestampUrl = $env:WINDOWS_SIGNING_TIMESTAMP_URL
+          if ([string]::IsNullOrWhiteSpace($timestampUrl)) {
+            $timestampUrl = "http://timestamp.digicert.com"
+          }
+
+          try {
+            [System.IO.File]::WriteAllBytes($certPath, [System.Convert]::FromBase64String($env:WINDOWS_SIGNING_CERT_BASE64))
+            $signtool = (Get-Command signtool.exe -ErrorAction Stop).Source
+
+            $targets = Get-ChildItem -Path "artifacts/windows/runtime" -Recurse -File |
+              Where-Object { $_.Extension -in ".exe", ".dll" }
+
+            if (-not $targets) {
+              throw "No Windows executables or DLLs found to sign."
+            }
+
+            foreach ($target in $targets) {
+              & $signtool sign /fd SHA256 /f $certPath /p $env:WINDOWS_SIGNING_CERT_PASSWORD /tr $timestampUrl /td SHA256 $target.FullName
+              if ($LASTEXITCODE -ne 0) {
+                throw "signtool failed for $($target.FullName)"
+              }
+            }
+
+            & $signtool verify /pa "artifacts/windows/runtime/portable/D-LAN.GUI.exe"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Signature verification failed for artifacts/windows/runtime/portable/D-LAN.GUI.exe"
+            }
+          } finally {
+            if (Test-Path $certPath) {
+              Remove-Item -Path $certPath -Force
+            }
+          }
+
+      - name: Rebuild package metadata after signing
+        if: steps.signing-config.outputs.enabled == 'true'
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+
+          (
+            cd artifacts/windows
+            find runtime -type f -print0 | sort -z | while IFS= read -r -d '' file; do
+              sha256sum "${file}"
+            done > SHA256SUMS
+          )
+
+          portable_win_path="$(cygpath -w "$(pwd)/artifacts/windows/runtime/portable")"
+          archive_win_path="$(cygpath -w "$(pwd)/artifacts/windows/packages/d-lan-windows-portable.zip")"
+          powershell.exe -NoProfile -Command "Compress-Archive -Path '${portable_win_path}\\*' -DestinationPath '${archive_win_path}' -Force"
+
+      - name: Smoke check artifacts
+        shell: msys2 {0}
+        run: bash .github/scripts/ci-smoke-check.sh windows
+
+      - name: Stage release assets
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          cp artifacts/windows/packages/d-lan-windows-portable.zip "release-assets/d-lan-windows-${{ matrix.qt }}-portable.zip"
+          cp artifacts/windows/packages/PACKAGES.txt "release-assets/d-lan-windows-${{ matrix.qt }}-PACKAGES.txt"
+          cp artifacts/windows/SHA256SUMS "release-assets/d-lan-windows-${{ matrix.qt }}-SHA256SUMS.txt"
+          cp artifacts/windows/BUILD_STATUS.txt "release-assets/d-lan-windows-${{ matrix.qt }}-BUILD_STATUS.txt"
+          cp artifacts/windows/SMOKE_STATUS.txt "release-assets/d-lan-windows-${{ matrix.qt }}-SMOKE_STATUS.txt"
+
+      - name: Upload staged release assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-assets-windows-${{ matrix.qt }}
+          path: release-assets
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-release-assets:
+    name: Publish Release Assets
+    needs:
+      - prepare-release
+      - unix-build
+      - windows-build
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Download staged assets
+        uses: actions/download-artifact@v6
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: List staged assets
+        run: ls -lah release-assets
+
+      - name: Upload assets to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare-release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(release-assets/*)
+          if [[ ${#assets[@]} -eq 0 ]]; then
+            echo "No release assets were staged."
+            exit 1
+          fi
+          gh release upload "${RELEASE_TAG}" ${assets[@]} --clobber

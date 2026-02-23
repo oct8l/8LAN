@@ -1,0 +1,214 @@
+name: PR Artifact Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-artifact-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unix-build:
+    name: ${{ matrix.display_name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - display_name: Linux Build (Qt 5)
+            runner: ubuntu-22.04
+            platform: linux
+            qt: qt5
+            setup_script: .github/scripts/ci-linux-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: ""
+            accept_qt6: "0"
+          - display_name: macOS Build (Qt 5)
+            runner: macos-latest
+            platform: macos
+            qt: qt5
+            setup_script: .github/scripts/ci-macos-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: CONFIG-=app_bundle
+            accept_qt6: "0"
+          - display_name: Linux Build (Qt 6)
+            runner: ubuntu-22.04
+            platform: linux
+            qt: qt6
+            setup_script: .github/scripts/ci-linux-qt6-setup.sh
+            qmake_bin: qmake6
+            qmake_extra_flags: ""
+            accept_qt6: "1"
+          - display_name: macOS Build (Qt 6)
+            runner: macos-latest
+            platform: macos
+            qt: qt6
+            setup_script: .github/scripts/ci-macos-qt6-setup.sh
+            qmake_bin: ""
+            qmake_extra_flags: CONFIG-=app_bundle
+            accept_qt6: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: bash "${{ matrix.setup_script }}"
+
+      - name: Build components
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+          QMAKE_BIN: ${{ matrix.qmake_bin }}
+          QMAKE_EXTRA_FLAGS: ${{ matrix.qmake_extra_flags }}
+          ACCEPT_QT6: ${{ matrix.accept_qt6 }}
+        run: bash .github/scripts/ci-linux-build.sh
+
+      - name: Smoke check artifacts
+        if: always()
+        run: bash .github/scripts/ci-smoke-check.sh linux
+
+      - name: Stage artifact bundle
+        if: always()
+        run: |
+          set -euo pipefail
+
+          copy_optional() {
+            local src="$1"
+            local dest="$2"
+            if [[ -f "${src}" ]]; then
+              cp "${src}" "${dest}"
+            fi
+          }
+
+          mkdir -p pr-artifacts
+          copy_optional artifacts/linux/packages/d-lan-linux-portable.tar.gz "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
+          copy_optional artifacts/linux/packages/PACKAGES.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-PACKAGES.txt"
+          copy_optional artifacts/linux/SHA256SUMS "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SHA256SUMS.txt"
+          copy_optional artifacts/linux/BUILD_STATUS.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-BUILD_STATUS.txt"
+          copy_optional artifacts/linux/SMOKE_STATUS.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          copy_optional artifacts/linux/logs/build.log "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-build.log"
+          copy_optional artifacts/linux/logs/smoke.log "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-smoke.log"
+
+          if ! compgen -G "pr-artifacts/*" >/dev/null; then
+            echo "No artifacts were produced by this job." > "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-NO_ARTIFACTS.txt"
+          fi
+
+      - name: Upload PR artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pr-artifacts-${{ matrix.platform }}-${{ matrix.qt }}
+          path: pr-artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+  windows-build:
+    name: Windows Build (${{ matrix.qt }})
+    runs-on: windows-2022
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - qt: qt5
+            build_configs: release debug
+            qmake_bin: ""
+            lrelease_bin: ""
+            windeployqt_bin: ""
+            accept_qt6: "0"
+            install_packages: >-
+              git
+              base-devel
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-make
+              mingw-w64-x86_64-qt5-base
+              mingw-w64-x86_64-qt5-tools
+              mingw-w64-x86_64-qt5-winextras
+              mingw-w64-x86_64-qt5-svg
+              mingw-w64-x86_64-qt5-declarative
+              mingw-w64-x86_64-protobuf
+          - qt: qt6
+            build_configs: release
+            qmake_bin: qmake6
+            lrelease_bin: lrelease
+            windeployqt_bin: windeployqt6
+            accept_qt6: "1"
+            install_packages: >-
+              git
+              base-devel
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-make
+              mingw-w64-x86_64-qt6-base
+              mingw-w64-x86_64-qt6-tools
+              mingw-w64-x86_64-qt6-svg
+              mingw-w64-x86_64-qt6-declarative
+              mingw-w64-x86_64-protobuf
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup MSYS2 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          cache: true
+          install: ${{ matrix.install_packages }}
+
+      - name: Build components
+        shell: msys2 {0}
+        env:
+          ALLOW_PROTOCOL_BREAK: "1"
+          BUILD_CONFIGS: ${{ matrix.build_configs }}
+          QMAKE_BIN: ${{ matrix.qmake_bin }}
+          LRELEASE_BIN: ${{ matrix.lrelease_bin }}
+          WINDEPLOYQT_BIN: ${{ matrix.windeployqt_bin }}
+          ACCEPT_QT6: ${{ matrix.accept_qt6 }}
+        run: bash .github/scripts/ci-windows-build.sh
+
+      - name: Smoke check artifacts
+        if: always()
+        shell: msys2 {0}
+        run: bash .github/scripts/ci-smoke-check.sh windows
+
+      - name: Stage artifact bundle
+        if: always()
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+
+          copy_optional() {
+            local src="$1"
+            local dest="$2"
+            if [[ -f "${src}" ]]; then
+              cp "${src}" "${dest}"
+            fi
+          }
+
+          mkdir -p pr-artifacts
+          copy_optional artifacts/windows/packages/d-lan-windows-portable.zip "pr-artifacts/d-lan-windows-${{ matrix.qt }}-portable.zip"
+          copy_optional artifacts/windows/packages/PACKAGES.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-PACKAGES.txt"
+          copy_optional artifacts/windows/SHA256SUMS "pr-artifacts/d-lan-windows-${{ matrix.qt }}-SHA256SUMS.txt"
+          copy_optional artifacts/windows/BUILD_STATUS.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-BUILD_STATUS.txt"
+          copy_optional artifacts/windows/SMOKE_STATUS.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          copy_optional artifacts/windows/logs/build.log "pr-artifacts/d-lan-windows-${{ matrix.qt }}-build.log"
+          copy_optional artifacts/windows/logs/smoke.log "pr-artifacts/d-lan-windows-${{ matrix.qt }}-smoke.log"
+
+          if ! compgen -G "pr-artifacts/*" >/dev/null; then
+            echo "No artifacts were produced by this job." > "pr-artifacts/d-lan-windows-${{ matrix.qt }}-NO_ARTIFACTS.txt"
+          fi
+
+      - name: Upload PR artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pr-artifacts-windows-${{ matrix.qt }}
+          path: pr-artifacts
+          if-no-files-found: error
+          retention-days: 14

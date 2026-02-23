@@ -255,7 +255,7 @@ void RemoteConnection::refresh()
          const QList<QNetworkAddressEntry>& addresses = interface.addressEntries();
          if (!addresses.isEmpty())
          {
-            Protos::Common::Interface* interfaceMess = state.add_interface();
+            Protos::Common::Interface* interfaceMess = state.add_interfaces();
             interfaceMess->set_id(interface.index() == 0 ? Common::Global::hashStringToInt(interface.name()) : interface.index());
             Common::ProtoHelper::setStr(*interfaceMess, &Protos::Common::Interface::set_name, interface.humanReadableName());
             interfaceMess->set_isup(interface.flags().testFlag(QNetworkInterface::IsUp) && interface.flags().testFlag(QNetworkInterface::IsRunning));

@@ -227,18 +227,18 @@ void WidgetSettings::updateNetworkInterfaces(const Protos::GUI::State& state)
 
    QList<QLabel*> interfaceNotUpdated = this->ui->scoInterfacesContent->findChildren<QLabel*>("");
 
-   for (int i = 0; i < state.interface_size(); i++)
+   for (int i = 0; i < state.interfaces_size(); i++)
    {
-      const QString& interfaceName = Common::ProtoHelper::getStr(state.interface(i), &Protos::Common::Interface::name);
+      const QString& interfaceName = Common::ProtoHelper::getStr(state.interfaces(i), &Protos::Common::Interface::name);
 
       for (QListIterator<QObject*> j(this->ui->scoInterfacesContent->children()); j.hasNext();)
       {
          QLabel* lblInterface = dynamic_cast<QLabel*>(j.next());
-         if (lblInterface && lblInterface->property("id").toUInt() == state.interface(i).id())
+         if (lblInterface && lblInterface->property("id").toUInt() == state.interfaces(i).id())
          {
             interfaceNotUpdated.removeOne(lblInterface);
-            lblInterface->setText(interfaceName + (state.interface(i).isup() ? "" : " <img src= \":/icons/ressources/error.png\" /> <em>" + tr("Interface not active") + "</em>"));
-            this->updateAddresses(state.interface(i), static_cast<QWidget*>(j.next()));
+            lblInterface->setText(interfaceName + (state.interfaces(i).isup() ? "" : " <img src= \":/icons/ressources/error.png\" /> <em>" + tr("Interface not active") + "</em>"));
+            this->updateAddresses(state.interfaces(i), static_cast<QWidget*>(j.next()));
             goto nextInterface;
          }
       }
@@ -246,11 +246,11 @@ void WidgetSettings::updateNetworkInterfaces(const Protos::GUI::State& state)
       {
          // Interface not found -> add a new one.
          QLabel* label = new QLabel(interfaceName, this->ui->scoInterfacesContent);
-         label->setProperty("id", state.interface(i).id());
+         label->setProperty("id", state.interfaces(i).id());
          this->ui->layInterfaces->addWidget(label);
          QWidget* addressesContainer = new QWidget(this->ui->scoInterfacesContent);
          this->ui->layInterfaces->addWidget(addressesContainer);
-         this->updateAddresses(state.interface(i), addressesContainer);
+         this->updateAddresses(state.interfaces(i), addressesContainer);
       }
 
       nextInterface:;
