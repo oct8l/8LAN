@@ -5,7 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROTO_DIR="${ROOT_DIR}/application/Protos"
 ARTIFACTS_DIR="${1:-${ROOT_DIR}/artifacts/protocol}"
 PROTOC_BIN="${2:-$(command -v protoc || true)}"
-BASELINE_REF="${PROTO_BASELINE_REF:-origin/1.1}"
+DEFAULT_BASELINE_REF="${PROTO_BASELINE_REF:-origin/1.1}"
+BASELINE_REF="${DEFAULT_BASELINE_REF}"
 ALLOW_PROTOCOL_BREAK="${ALLOW_PROTOCOL_BREAK:-0}"
 SKIP_PROTOCOL_COMPAT_CHECK="${SKIP_PROTOCOL_COMPAT_CHECK:-0}"
 
@@ -51,38 +52,79 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
-ensure_baseline_ref() {
-  if git cat-file -e "${BASELINE_REF}^{commit}" 2>/dev/null; then
+try_resolve_baseline_ref() {
+  local candidate_ref="$1"
+
+  if [[ -z "${candidate_ref}" ]]; then
+    return 1
+  fi
+
+  if git cat-file -e "${candidate_ref}^{commit}" 2>/dev/null; then
+    BASELINE_REF="${candidate_ref}"
     return 0
   fi
 
-  local branch_ref="${BASELINE_REF}"
-  if [[ "${branch_ref}" == origin/* ]]; then
-    branch_ref="${branch_ref#origin/}"
-  fi
+  if [[ "${candidate_ref}" == origin/* ]]; then
+    local branch_ref="${candidate_ref#origin/}"
+    echo "Baseline ref ${candidate_ref} not found locally; fetching origin/${branch_ref}"
 
-  echo "Baseline ref ${BASELINE_REF} not found locally; fetching origin/${branch_ref}"
-  git fetch --no-tags --depth=1 origin "${branch_ref}" >/dev/null 2>&1 || true
+    if git fetch --no-tags --depth=1 origin "${branch_ref}" >/dev/null 2>&1; then
+      if git cat-file -e "${candidate_ref}^{commit}" 2>/dev/null; then
+        BASELINE_REF="${candidate_ref}"
+        return 0
+      fi
 
-  if git cat-file -e "${BASELINE_REF}^{commit}" 2>/dev/null; then
-    return 0
-  fi
-
-  if git cat-file -e "FETCH_HEAD^{commit}" 2>/dev/null; then
-    BASELINE_REF="FETCH_HEAD"
-    return 0
+      if git cat-file -e "FETCH_HEAD^{commit}" 2>/dev/null; then
+        BASELINE_REF="FETCH_HEAD"
+        return 0
+      fi
+    fi
   fi
 
   return 1
 }
 
-if ! ensure_baseline_ref; then
+resolve_baseline_ref() {
+  local candidates=("${DEFAULT_BASELINE_REF}")
+
+  # In PRs, this is typically the branch we actually want to compare against.
+  if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+    candidates+=("origin/${GITHUB_BASE_REF}")
+  fi
+
+  # Fresh repos (like 8LAN) may not carry origin/1.1. Fall back to active defaults.
+  candidates+=("origin/main" "origin/master" "HEAD^")
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if try_resolve_baseline_ref "${candidate}"; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+if ! resolve_baseline_ref; then
+  if [[ "${ALLOW_PROTOCOL_BREAK}" == "1" ]]; then
+    {
+      echo "status=skipped"
+      echo "reason=baseline_ref_missing_allow_protocol_break"
+      echo "requested_baseline_ref=${DEFAULT_BASELINE_REF}"
+      echo "allow_protocol_break=${ALLOW_PROTOCOL_BREAK}"
+    } > "${SUMMARY_FILE}"
+
+    rm -f "${DIFF_FILE}"
+    echo "Unable to resolve protocol baseline ref ${DEFAULT_BASELINE_REF}; ALLOW_PROTOCOL_BREAK=1 so compatibility diff is skipped"
+    exit 0
+  fi
+
   {
     echo "status=error"
     echo "reason=baseline_ref_missing"
-    echo "baseline_ref=${BASELINE_REF}"
+    echo "requested_baseline_ref=${DEFAULT_BASELINE_REF}"
   } > "${SUMMARY_FILE}"
-  echo "Unable to resolve protocol baseline ref ${BASELINE_REF}"
+  echo "Unable to resolve protocol baseline ref ${DEFAULT_BASELINE_REF}"
   exit 1
 fi
 
