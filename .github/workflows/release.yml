@@ -144,11 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          cp artifacts/linux/packages/d-lan-linux-portable.tar.gz "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
-          cp artifacts/linux/packages/PACKAGES.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-PACKAGES.txt"
-          cp artifacts/linux/SHA256SUMS "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SHA256SUMS.txt"
-          cp artifacts/linux/BUILD_STATUS.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-BUILD_STATUS.txt"
-          cp artifacts/linux/SMOKE_STATUS.txt "release-assets/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          cp artifacts/linux/packages/d-lan-linux-portable.tar.gz "release-assets/8lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
 
       - name: Upload staged release assets
         uses: actions/upload-artifact@v6
@@ -309,11 +305,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          cp artifacts/windows/packages/d-lan-windows-portable.zip "release-assets/d-lan-windows-${{ matrix.qt }}-portable.zip"
-          cp artifacts/windows/packages/PACKAGES.txt "release-assets/d-lan-windows-${{ matrix.qt }}-PACKAGES.txt"
-          cp artifacts/windows/SHA256SUMS "release-assets/d-lan-windows-${{ matrix.qt }}-SHA256SUMS.txt"
-          cp artifacts/windows/BUILD_STATUS.txt "release-assets/d-lan-windows-${{ matrix.qt }}-BUILD_STATUS.txt"
-          cp artifacts/windows/SMOKE_STATUS.txt "release-assets/d-lan-windows-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          cp artifacts/windows/packages/d-lan-windows-portable.zip "release-assets/8lan-windows-${{ matrix.qt }}-portable.zip"
 
       - name: Upload staged release assets
         uses: actions/upload-artifact@v6
