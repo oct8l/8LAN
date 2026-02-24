@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -453,9 +453,9 @@ QString Global::dataFolders[2]; // The two folders (roaming and local), see Data
 /**
   * Returns the absolute path to the roaming data folder.
   * For example under Windows :
-  * - type == ROAMING : "C:/Users/john/AppData/Roaming/D-LAN"
-  * - type == LOCAL : "C:/Users/john/AppData/Local/D-LAN"
-  * Create the folder "D-LAN" if needed.
+  * - type == ROAMING : "C:/Users/john/AppData/Roaming/8LAN"
+  * - type == LOCAL : "C:/Users/john/AppData/Local/8LAN"
+  * Create the folder "8LAN" if needed.
   * @exception UnableToGetFolder
   */
 QString Global::getDataFolder(DataFolderType type, bool create)
@@ -508,7 +508,7 @@ void Global::setDataFolderToDefault(DataFolderType type)
 
 /**
   * Return where the local services put their data.
-  * It's used to retrieve the data folder of D-LAN.Core when run as a service.
+  * It's used to retrieve the data folder of 8LAN.Core when run as a service.
   */
 QString Global::getDataServiceFolder(DataFolderType type)
 {
@@ -674,7 +674,7 @@ QString Global::setCurrentDirToTemp(const QString& dirname)
 {
    Q_ASSERT(!dirname.isEmpty());
 
-   const QString TEMP_DIRNAME("D-LAN " + dirname);
+   const QString TEMP_DIRNAME("8LAN " + dirname);
    QDir::setCurrent(QDir::tempPath());
    if (!QDir::current().exists(TEMP_DIRNAME))
       if (!QDir::current().mkdir(TEMP_DIRNAME))

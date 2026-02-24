@@ -6,7 +6,7 @@ file.filename = "test_script_1.js";
 file.open(QFile.ReadOnly)
 print(file.readAll())
 
-var core = dlan.newConnection()
+var core = lan8.newConnection()
 
 core.connected.connect(function(){
    print("Connected!")   
@@ -24,7 +24,7 @@ var basPort = 59490
 var cors = []
 for (int i = 0; i < 100; i++)
 {
-   cors[port] = dlan.newConnection("localhost", basPort + i)
+   cors[port] = lan8.newConnection("localhost", basPort + i)
 
    core.connected.connect(function(){
       print("Connected!")   

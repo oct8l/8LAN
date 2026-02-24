@@ -1,5 +1,5 @@
 format 75
-"RemoteControlManager" // Aybabtu::Core::RemoteControlManager
+"RemoteControlManager" // 8LAN::Core::RemoteControlManager
   revision 7
   modified_by 42 "gburri"
   // class settings

@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,9 @@ using namespace RCC;
 #include <priv/Log.h>
 
 #ifdef Q_OS_WIN32
-   const QString CoreController::CORE_EXE_NAME("D-LAN.Core.exe");
+   const QString CoreController::CORE_EXE_NAME("8LAN.Core.exe");
 #else
-   const QString CoreController::CORE_EXE_NAME("D-LAN.Core");
+   const QString CoreController::CORE_EXE_NAME("8LAN.Core");
 #endif
 
 const int CoreController::TIMEOUT_SUBPROCESS_WAIT_FOR_STARTED(2000); // 2s.
@@ -54,7 +54,7 @@ void CoreController::startCore(int port)
    if (!debug && !this->controller.isInstalled())
    {
       if (!QtServiceController::install(CORE_EXE_NAME))
-         L_WARN(QObject::tr("D-LAN Core cannot be installed as a service"));
+         L_WARN(QObject::tr("8LAN Core cannot be installed as a service"));
    }
 
    if (!this->controller.isRunning())

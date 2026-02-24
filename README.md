@@ -1,0 +1,26 @@
+h1. 8LAN
+
+8LAN is an open source LAN file sharing software.
+
+Original author: Greg Burri. Current fork: oct8l.
+
+The goal is to easily share some files and folders in a local area network environment like a LAN-Party. All clients are full-trusted. After you launched 8LAN, you will see all other people and theirs sharing automatically without special configuration.
+
+* "Website":http://www.8lan.net
+* "Development wiki":http://dev.8lan.net/projects/pmp/wiki
+* "Forums":http://dev.8lan.net/projects/pmp/boards
+* "Issues":http://dev.8lan.net/projects/pmp/issues
+
+
+h2. Features
+
+* Share files and folders in a local area network environment (LAN).
+* Distributed transfers to increase performance and reliability.
+* Very easy to use: no configuration, no central server.
+* Fast indexed search among all other peers.
+* Browse all files and folders of any other peer.
+* Manage the download queue. It includes adding, deleting or reordering.
+* Global chatting.
+* 8LAN can run without graphic interface (GUI) and be controlled remotely.
+* Open source. Code source distributed under GPLv3 license.
+* Free of any sort of ads or malwares.

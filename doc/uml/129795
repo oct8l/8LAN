@@ -1,5 +1,5 @@
 format 75
-"PeerManager" // Aybabtu::Core::PeerManager
+"PeerManager" // 8LAN::Core::PeerManager
   revision 11
   modified_by 42 "gburri"
   // class settings

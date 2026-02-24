@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 #include <Common/LogManager/Builder.h>
 
-#include <D-LAN_Client.h>
+#include <8LAN_Client.h>
 
 /**
   * Arguments : [--help | -h] [--run <script file>]
@@ -32,6 +32,6 @@ int main(int argc, char* argv[])
 {
    LM::Builder::setLogDirName("log_client");
 
-   Client::D_LAN_Client client(argc, argv);
+   Client::EightLAN_Client client(argc, argv);
    return client.exec();
 }

@@ -1,5 +1,5 @@
 format 75
-"UploadManager" // Aybabtu::Core::UploadManager
+"UploadManager" // 8LAN::Core::UploadManager
   revision 11
   modified_by 42 "gburri"
   // class settings

@@ -6,7 +6,7 @@
 # DEFINES += ENABLE_NVWA
 
 QT += network
-TARGET = "D-LAN.Core"
+TARGET = "8LAN.Core"
 CONFIG += link_prl
 
 RC_FILE = ../Common/version.rc

@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Terminal=false
-Icon=d-lan
+Icon=8lan
 Type=Application
 Categories=Network;
-Exec=d-lan-gui
-Name=D-LAN
+Exec=8lan-gui
+Name=8LAN

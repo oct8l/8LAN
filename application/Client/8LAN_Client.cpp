@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -19,28 +19,28 @@
 #include <QFile>
 #include <QStringList>
   
-#include <D-LAN_Client.h>
+#include <8LAN_Client.h>
 using namespace Client;
 
 /**
-  * @class GUI::D_LAN_Client
+  * @class GUI::EightLAN_Client
   *
   * Goals:
   *  - Connect to a existing core or to automatically launch one.
   *  - Control a core via simple commands or javascript files.
   */
 
-D_LAN_Client::D_LAN_Client(int argc, char* argv[]) :
+EightLAN_Client::EightLAN_Client(int argc, char* argv[]) :
    QCoreApplication(argc, argv),
    out(stdout)
 {
-   this->out << "D-LAN Client" << Qt::endl;
+   this->out << "8LAN Client" << Qt::endl;
 
-   connect(&this->consoleReader, &Common::ConsoleReader::newLine, this, &D_LAN_Client::newCommandLine, Qt::QueuedConnection);
+   connect(&this->consoleReader, &Common::ConsoleReader::newLine, this, &EightLAN_Client::newCommandLine, Qt::QueuedConnection);
    this->consoleReader.start();
 }
 
-QJSValue D_LAN_Client::newConnection()
+QJSValue EightLAN_Client::newConnection()
 {
    return this->engine.newQObject(new CoreConnectionProxy());
 }
@@ -48,7 +48,7 @@ QJSValue D_LAN_Client::newConnection()
 //Q_SCRIPT_DECLARE_QMETAOBJECT(QFile, QObject*)
 //Q_SCRIPT_DECLARE_QMETAOBJECT(QIODevice, QObject*)
 
-void D_LAN_Client::newCommandLine(QString line)
+void EightLAN_Client::newCommandLine(QString line)
 {
    if (line == ConsoleReader::QUIT_COMMAND)
    {
@@ -62,7 +62,7 @@ void D_LAN_Client::newCommandLine(QString line)
    else if (line == "run")
    {
       QJSValue objectValue = this->engine.newQObject(this);
-      this->engine.globalObject().setProperty("dlan", objectValue);
+      this->engine.globalObject().setProperty("lan8", objectValue);
 
       QJSValue qfileClass = this->engine.newQMetaObject(&QFile::staticMetaObject);
       engine.globalObject().setProperty("QFile", qfileClass);
@@ -84,7 +84,7 @@ void D_LAN_Client::newCommandLine(QString line)
    }
 }
 
-void D_LAN_Client::printHelp()
+void EightLAN_Client::printHelp()
 {
    this->out << "Commands:" << Qt::endl <<
                 " - help : print this help " << Qt::endl <<

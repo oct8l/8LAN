@@ -1,5 +1,5 @@
 QT       += core network qml
-TARGET = "D-LAN.Client"
+TARGET = "8LAN.Client"
 TEMPLATE = app
 CONFIG += console
 
@@ -22,7 +22,7 @@ LIBS += -L../Common/output/$$FOLDER \
     -lCommon
 PRE_TARGETDEPS += ../Common/output/$$FOLDER/libCommon.a
 
-SOURCES += D-LAN_Client.cpp \
+SOURCES += 8LAN_Client.cpp \
     ../Protos/gui_protocol.pb.cc \
     ../Protos/common.pb.cc \
     ../Protos/gui_settings.pb.cc \
@@ -30,7 +30,7 @@ SOURCES += D-LAN_Client.cpp \
     main.cpp \
     CoreConnectionProxy.cpp
 
-HEADERS  += D-LAN_Client.h \
+HEADERS  += 8LAN_Client.h \
     ../Protos/gui_protocol.pb.h \
     ../Protos/common.pb.h \
     ../Protos/gui_settings.pb.h \

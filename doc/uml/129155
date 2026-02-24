@@ -1,5 +1,5 @@
 format 75
-"DownloadManager" // Aybabtu::Core::DownloadManager
+"DownloadManager" // 8LAN::Core::DownloadManager
   revision 13
   modified_by 42 "gburri"
   // class settings

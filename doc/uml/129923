@@ -1,5 +1,5 @@
 format 75
-"NetworkListener" // Aybabtu::Core::NetworkListener
+"NetworkListener" // 8LAN::Core::NetworkListener
   revision 11
   modified_by 42 "gburri"
   // class settings

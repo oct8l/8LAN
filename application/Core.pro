@@ -11,6 +11,6 @@ SUBDIRS = Common \
    Core/RemoteControlManager \
    Core
 
-TRANSLATIONS = translations/d_lan_core.fr.ts \
-   translations/d_lan_core.ko.ts
+TRANSLATIONS = translations/8lan_core.fr.ts \
+   translations/8lan_core.ko.ts
 CODECFORTR = UTF-8

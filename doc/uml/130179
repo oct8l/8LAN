@@ -1,5 +1,5 @@
 format 69
-"Core" // Aybabtu::Core::Core
+"Core" // 8LAN::Core::Core
   revision 4
   modified_by 34 "gburri"
   // class settings
@@ -26,8 +26,8 @@ format 69
   package_name_in_tab default show_context default show_opaque_action_definition default auto_label_position default write_flow_label_horizontally default draw_all_relations default shadow default
   show_infonote default drawing_language default show_stereotype_properties default
   
-  cpp_h_dir "C:/Users/gburri/Documents/aybabtu/application/src/Core/"
-  cpp_src_dir "C:/Users/gburri/Documents/aybabtu/application/src/Core/"
+  cpp_h_dir "C:/Users/gburri/Documents/8lan/application/src/Core/"
+  cpp_src_dir "C:/Users/gburri/Documents/8lan/application/src/Core/"
   cpp_namespace "Core"
   classview 129923 "Classes"
     //class diagram settings

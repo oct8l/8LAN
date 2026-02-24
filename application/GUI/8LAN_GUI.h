@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
   */
   
-#ifndef GUI_D_LAN_GUI_H
-#define GUI_D_LAN_GUI_H
+#ifndef GUI_EIGHTLAN_GUI_H
+#define GUI_EIGHTLAN_GUI_H
 
 #include <QApplication>
 #include <QTranslator>
@@ -31,7 +31,7 @@
 
 namespace GUI
 {
-   class D_LAN_GUI : public QApplication
+   class EightLAN_GUI : public QApplication
    {
       static const QString SHARED_MEMORY_KEYNAME;
 
@@ -39,7 +39,7 @@ namespace GUI
    public:
       class AbortException {};
 
-      D_LAN_GUI(int& argc, char* argv[]);
+      EightLAN_GUI(int& argc, char* argv[]);
 
    protected:
       bool event(QEvent* event);

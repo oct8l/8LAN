@@ -3,8 +3,8 @@
 DIR=../..
 INST_DIR=$DIR/Installations
 WORK_DIR=$INST_DIR/packaging
-DEB_DIR=$WORK_DIR/d-lan
-APP_DIR=$DEB_DIR/usr/share/d-lan
+DEB_DIR=$WORK_DIR/8lan
+APP_DIR=$DEB_DIR/usr/share/8lan
 STYLES_DIR=$APP_DIR/styles
 I18N_DIR=$APP_DIR/languages
 DESKTOP_DIR=$DEB_DIR/usr/share/applications
@@ -18,8 +18,8 @@ ICON_256_DIR=$DEB_DIR/usr/share/icons/hicolor/256x256/apps
 
 STYLES_FILES=$DIR/styles/*
 I18N_FILES=$DIR/translations/*.qm
-CORE_FILE=$DIR/Core/output/release/D-LAN.Core
-GUI_FILE=$DIR/GUI/output/release/D-LAN.GUI
+CORE_FILE=$DIR/Core/output/release/8LAN.Core
+GUI_FILE=$DIR/GUI/output/release/8LAN.GUI
 ICON_FILE=$DIR/Common/ressources/icon.ico
 
 # Default dependencies for modern Qt5/protobuf3 packaging.
@@ -45,15 +45,15 @@ cp $GUI_FILE $APP_DIR/
 rm -Rf $WORK_DIR/temp
 mkdir -p $WORK_DIR/temp
 convert $ICON_FILE $WORK_DIR/temp/icon.png
-cp $WORK_DIR/temp/icon-0.png $ICON_16_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-1.png $ICON_24_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-2.png $ICON_32_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-3.png $ICON_48_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-4.png $ICON_64_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-5.png $ICON_128_DIR/d-lan.png
-cp $WORK_DIR/temp/icon-6.png $ICON_256_DIR/d-lan.png
+cp $WORK_DIR/temp/icon-0.png $ICON_16_DIR/8lan.png
+cp $WORK_DIR/temp/icon-1.png $ICON_24_DIR/8lan.png
+cp $WORK_DIR/temp/icon-2.png $ICON_32_DIR/8lan.png
+cp $WORK_DIR/temp/icon-3.png $ICON_48_DIR/8lan.png
+cp $WORK_DIR/temp/icon-4.png $ICON_64_DIR/8lan.png
+cp $WORK_DIR/temp/icon-5.png $ICON_128_DIR/8lan.png
+cp $WORK_DIR/temp/icon-6.png $ICON_256_DIR/8lan.png
 
-cp d-lan.desktop $DESKTOP_DIR/
+cp 8lan.desktop $DESKTOP_DIR/
 
 cp -R ./DEBIAN $DEB_DIR/
 echo "For which architecture ?"
@@ -92,8 +92,8 @@ sudo chown -R root:root $DEB_DIR
 sudo chmod -R 0644 $DEB_DIR
 sudo chmod -R +X $DEB_DIR
 sudo chmod 0755 $DEB_DIR/DEBIAN/postinst $DEB_DIR/DEBIAN/prerm
-sudo chmod 0777 $APP_DIR/D-LAN.Core $APP_DIR/D-LAN.GUI
-dpkg-deb --build d-lan
-mv d-lan.deb $INST_DIR/D-LAN-$vhead$vtag-$vdate-$arch.deb
+sudo chmod 0777 $APP_DIR/8LAN.Core $APP_DIR/8LAN.GUI
+dpkg-deb --build 8lan
+mv 8lan.deb $INST_DIR/8LAN-$vhead$vtag-$vdate-$arch.deb
  
 rm -Rf $WORK_DIR/temp

@@ -67,17 +67,17 @@ check_binaries_present() {
   local bin_dir=""
   if [[ "${PLATFORM}" == "windows" ]]; then
     bin_dir="${ARTIFACTS_DIR}/runtime/portable"
-    local binaries=("D-LAN.Core.exe" "D-LAN.GUI.exe" "D-LAN.Client.exe")
+    local binaries=("8LAN.Core.exe" "8LAN.GUI.exe" "8LAN.Client.exe")
   else
     bin_dir="${ARTIFACTS_DIR}/runtime/bin/release"
-    local binaries=("D-LAN.Core" "D-LAN.GUI" "D-LAN.Client")
+    local binaries=("8LAN.Core" "8LAN.GUI" "8LAN.Client")
   fi
 
   for bin in "${binaries[@]}"; do
     local full_path="${bin_dir}/${bin}"
     if [[ -f "${full_path}" ]]; then
       pass "binary present: ${bin}"
-      if [[ "${bin}" == "D-LAN.Core" || "${bin}" == "D-LAN.Core.exe" ]]; then
+      if [[ "${bin}" == "8LAN.Core" || "${bin}" == "8LAN.Core.exe" ]]; then
         CORE_BINARY="${full_path}"
       fi
     else

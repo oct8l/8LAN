@@ -1,5 +1,5 @@
 format 75
-"RemoteCoreController" // Aybabtu::Common::RemoteCoreController
+"RemoteCoreController" // 8LAN::Common::RemoteCoreController
   revision 1
   modified_by 42 "gburri"
   // class settings

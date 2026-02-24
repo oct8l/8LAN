@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include <Common/Constants.h>
 #include <Common/LogManager/Builder.h>
 
-#include <D-LAN_GUI.h>
+#include <8LAN_GUI.h>
 
 #if defined(DEBUG) && defined(ENABLE_NVWA)
    // For Common/debug_new.cpp.
@@ -66,10 +66,10 @@ int main(int argc, char *argv[])
 
    try
    {
-      GUI::D_LAN_GUI gui(argc, argv);
-      return GUI::D_LAN_GUI::exec();
+      GUI::EightLAN_GUI gui(argc, argv);
+      return GUI::EightLAN_GUI::exec();
    }
-   catch (GUI::D_LAN_GUI::AbortException&)
+   catch (GUI::EightLAN_GUI::AbortException&)
    {
       return 1;
    }

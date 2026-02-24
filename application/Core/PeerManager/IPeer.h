@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ namespace PM
       /**
         * When we download a file from a peer we can set its current speed with this method.
         * If this method isn't called for some time, the speed will be reset to its default value.
-        * See 'DownloadRateValidTime' from this wiki page: http://dev.d-lan.net/projects/pmp/wiki/Protocol_core-core#Parameters to show the computation.
+        * See 'DownloadRateValidTime' from this wiki page: http://dev.8lan.net/projects/pmp/wiki/Protocol_core-core#Parameters to show the computation.
         */
       virtual void setSpeed(quint32 newSpeed) = 0;
 
