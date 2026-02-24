@@ -66,7 +66,7 @@ jobs:
           fi
 
           echo "release_tag=${release_tag}" >> "${GITHUB_OUTPUT}"
-          echo "release_name=8LAN Build ${release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=8LAN ${release_tag}" >> "${GITHUB_OUTPUT}"
           echo "prerelease=${prerelease}" >> "${GITHUB_OUTPUT}"
           echo "draft=${draft}" >> "${GITHUB_OUTPUT}"
 
