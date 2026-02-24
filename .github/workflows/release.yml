@@ -354,4 +354,4 @@ jobs:
             echo "No release assets were staged."
             exit 1
           fi
-          gh release upload "${RELEASE_TAG}" ${assets[@]} --clobber
+          gh release upload "${RELEASE_TAG}" ${assets[@]} --clobber --repo "${GITHUB_REPOSITORY}"
