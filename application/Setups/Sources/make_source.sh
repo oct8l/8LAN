@@ -15,4 +15,4 @@ fi
 
 CURRENT_TREE=`git show --pretty="%H" HEAD | head -n 1`
 
-git archive --format=tar.gz $CURRENT_TREE > "$INST_DIR/D-LAN-${CURRENT_VERSION}-${CURRENT_DATE}-${CURRENT_TREE}.tar.gz"
+git archive --format=tar.gz $CURRENT_TREE > "$INST_DIR/8LAN-${CURRENT_VERSION}-${CURRENT_DATE}-${CURRENT_TREE}.tar.gz"

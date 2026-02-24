@@ -1,4 +1,4 @@
-Package: d-lan-all-in-one
+Package: 8lan-all-in-one
 Version: _VERSION_
 Section: base
 Priority: optional
@@ -6,9 +6,9 @@ Architecture: _ARCH_
 Installed-Size: _INST_SIZE_
 Depends: libprotobuf23 (_DEP_PROTOBUF_), libqt5core5a (_DEP_QTCORE_), libqt5gui5 (_DEP_QTGUI_), libqt5network5 (_DEP_QTNETWORK_), libqt5widgets5 (_DEP_QTWIDGETS_), libqt5script5 (_DEP_QTSCRIPT_), libc6 (_DEP_LIBC_), libstdc++6 (_DEP_LIBSTDCPP_), libgcc-s1 (_DEP_LIBGCC_)
 Maintainer: Hervé Martinet <herve.martinet@gmail.com>
-Homepage: https://www.d-lan.net
+Homepage: https://www.8lan.net
 Description: A free LAN file sharing software. 
  The goal is to easily exchange a large amount of data 
  in a local area network environment like a LAN-Party. 
- After you launched D-LAN, you will see all other people and their 
+ After you launched 8LAN, you will see all other people and their 
  sharing automatically without special configuration.

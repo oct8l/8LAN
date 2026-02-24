@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ CoreService::CoreService(bool resetSettings, QLocale locale, int argc, char** ar
          connect(&this->consoleReader, &Common::ConsoleReader::newLine, this, &CoreService::processUserInput, Qt::QueuedConnection);
          this->consoleReader.start();
          QTextStream out(stdout);
-         out << "D-LAN Core started with console support" << Qt::endl;
+         out << "8LAN Core started with console support" << Qt::endl;
          CoreService::printCommands();
          break;
       }

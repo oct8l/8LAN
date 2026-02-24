@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -161,7 +161,7 @@ namespace GUI
       QList<WidgetBrowse*> widgetsBrowse;
       QList<WidgetSearch*> widgetsSearch;
 
-      // This widget is shown on the tab of the downloads page. It is visible only after D-LAN has started and during the loading
+      // This widget is shown on the tab of the downloads page. It is visible only after 8LAN has started and during the loading
       // of the cache (before the downloads are loaded).
       // This widget is owned by the tab bar of the 'QMdiArea'.
       BusyIndicator* downloadsBusyIndicator;

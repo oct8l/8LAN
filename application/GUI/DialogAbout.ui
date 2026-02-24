@@ -105,7 +105,7 @@
         </font>
        </property>
        <property name="text">
-        <string>D-LAN</string>
+        <string>8LAN</string>
        </property>
        <property name="indent">
         <number>15</number>
@@ -135,7 +135,7 @@
      <item>
       <widget class="QLabel" name="lblCopyright">
        <property name="text">
-        <string>Copyright 2010-%1 Greg Burri. All rights reserved.</string>
+        <string>Copyright 2010-%1 Greg Burri and oct8l. All rights reserved.</string>
        </property>
        <property name="indent">
         <number>15</number>

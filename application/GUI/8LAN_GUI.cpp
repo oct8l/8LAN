@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
   */
   
-#include <D-LAN_GUI.h>
+#include <8LAN_GUI.h>
 using namespace GUI;
 
 #include <QMessageBox>
@@ -30,15 +30,15 @@ using namespace GUI;
 
 #include <Common/RemoteCoreController/Builder.h>
 
-const QString D_LAN_GUI::SHARED_MEMORY_KEYNAME("D-LAN GUI instance");
+const QString EightLAN_GUI::SHARED_MEMORY_KEYNAME("8LAN GUI instance");
 
 /**
-  * @class GUI::D_LAN_GUI
+  * @class GUI::EightLAN_GUI
   * This class control the trayIcon and create the main window.
   * The main window can be hid and deleted, the tray icon will still remain and will permit to relaunch the main window.
   */
 
-D_LAN_GUI::D_LAN_GUI(int& argc, char* argv[]) :
+EightLAN_GUI::EightLAN_GUI(int& argc, char* argv[]) :
    QApplication(argc, argv),
    mainWindow(0),
    trayIcon(QIcon(":/icons/ressources/icon.png")),
@@ -64,8 +64,8 @@ D_LAN_GUI::D_LAN_GUI(int& argc, char* argv[]) :
       if (!this->sharedMemory.create(1))
       {
          QMessageBox message;
-         message.setWindowTitle(QObject::tr("D-LAN already launched"));
-         message.setText(QObject::tr("An instance of D-LAN is already launched"));
+         message.setWindowTitle(QObject::tr("8LAN already launched"));
+         message.setText(QObject::tr("An instance of 8LAN is already launched"));
          message.setIcon(QMessageBox::Information);
          QAbstractButton* abortButton = message.addButton(QObject::tr("Quit"), QMessageBox::RejectRole);
          message.addButton(QObject::tr("Launch anyway"), QMessageBox::ActionRole);
@@ -73,7 +73,7 @@ D_LAN_GUI::D_LAN_GUI(int& argc, char* argv[]) :
          if (message.clickedButton() == abortButton)
          {
             this->sharedMemory.unlock();
-            QSharedPointer<LM::ILogger> mainLogger = LM::Builder::newLogger("D-LAN GUI");
+            QSharedPointer<LM::ILogger> mainLogger = LM::Builder::newLogger("8LAN GUI");
             mainLogger->log("GUI already launched, exiting . . .", LM::SV_END_USER);
             throw AbortException();
          }
@@ -87,23 +87,23 @@ D_LAN_GUI::D_LAN_GUI(int& argc, char* argv[]) :
    this->showMainWindow();
 
    RCC::ICoreConnection* coreConnectionPointer = this->coreConnection.data();
-   connect(coreConnectionPointer, &RCC::ICoreConnection::localCoreStatusChanged, this, &D_LAN_GUI::updateTrayIconMenu);
-   connect(coreConnectionPointer, &RCC::ICoreConnection::connected, this, &D_LAN_GUI::updateTrayIconMenu);
-   connect(coreConnectionPointer, &RCC::ICoreConnection::disconnected, this, &D_LAN_GUI::updateTrayIconMenu);
+   connect(coreConnectionPointer, &RCC::ICoreConnection::localCoreStatusChanged, this, &EightLAN_GUI::updateTrayIconMenu);
+   connect(coreConnectionPointer, &RCC::ICoreConnection::connected, this, &EightLAN_GUI::updateTrayIconMenu);
+   connect(coreConnectionPointer, &RCC::ICoreConnection::disconnected, this, &EightLAN_GUI::updateTrayIconMenu);
 
-   connect(&this->trayIcon, &QSystemTrayIcon::activated, this, &D_LAN_GUI::trayIconActivated);
+   connect(&this->trayIcon, &QSystemTrayIcon::activated, this, &EightLAN_GUI::trayIconActivated);
 
    this->updateTrayIconMenu();
 
    this->trayIcon.setContextMenu(&this->trayIconMenu);
    #ifndef Q_OS_LINUX
       // Fix a bug on ubuntu x86_64 (core dumped)
-      this->trayIcon.setToolTip("D-LAN");
+      this->trayIcon.setToolTip("8LAN");
    #endif
    this->trayIcon.show();
 }
 
-bool D_LAN_GUI::event(QEvent* event)
+bool EightLAN_GUI::event(QEvent* event)
 {
    if (event->type() == QEvent::LanguageChange)
       this->updateTrayIconMenu();
@@ -111,21 +111,21 @@ bool D_LAN_GUI::event(QEvent* event)
    return QApplication::event(event);
 }
 
-void D_LAN_GUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
+void EightLAN_GUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
    if (reason == QSystemTrayIcon::Trigger)
       this->showMainWindow();
 }
 
-void D_LAN_GUI::updateTrayIconMenu()
+void EightLAN_GUI::updateTrayIconMenu()
 {
    this->trayIconMenu.clear();
    QAction* showGuiAction = this->trayIconMenu.addAction(tr("Show the GUI"));
-   connect(showGuiAction, &QAction::triggered, this, &D_LAN_GUI::showMainWindow);
+   connect(showGuiAction, &QAction::triggered, this, &EightLAN_GUI::showMainWindow);
    if (this->coreConnection->getLocalCoreStatus() == RCC::RUNNING_AS_SERVICE) // We cannot stop a parent process without killing his child.
    {
       QAction* stopGuiAction = this->trayIconMenu.addAction(tr("Stop the GUI"));
-      connect(stopGuiAction, &QAction::triggered, this, &D_LAN_GUI::exitGUI);
+      connect(stopGuiAction, &QAction::triggered, this, &EightLAN_GUI::exitGUI);
    }
    this->trayIconMenu.addSeparator();
    QAction* exitAction = this->trayIconMenu.addAction(tr("Exit"));
@@ -135,20 +135,20 @@ void D_LAN_GUI::updateTrayIconMenu()
 /**
   * Load a translation file. If 'filename' is empty the default language is loaded.
   */
-void D_LAN_GUI::loadLanguage(const QString& filename)
+void EightLAN_GUI::loadLanguage(const QString& filename)
 {
    (void)this->translator.load(filename, QCoreApplication::applicationDirPath() + "/" + Common::Constants::LANGUAGE_DIRECTORY);
 }
 
-void D_LAN_GUI::mainWindowClosed()
+void EightLAN_GUI::mainWindowClosed()
 {
    if (this->coreConnection->isConnected())
-      this->trayIcon.showMessage("D-LAN GUI closed", "D-LAN Core is still running in background. Select 'exit' from the contextual menu if you want to stop it.");
+      this->trayIcon.showMessage("8LAN GUI closed", "8LAN Core is still running in background. Select 'exit' from the contextual menu if you want to stop it.");
    this->coreConnection->disconnectFromCore();
    this->mainWindow = nullptr;
 }
 
-void D_LAN_GUI::showMainWindow()
+void EightLAN_GUI::showMainWindow()
 {
    if (this->mainWindow)
    {
@@ -159,8 +159,8 @@ void D_LAN_GUI::showMainWindow()
    else
    {
       this->mainWindow = new MainWindow(this->coreConnection);
-      connect(this->mainWindow, &MainWindow::languageChanged, this, &D_LAN_GUI::loadLanguage);
-      connect(this->mainWindow, &QObject::destroyed, this, &D_LAN_GUI::mainWindowClosed);
+      connect(this->mainWindow, &MainWindow::languageChanged, this, &EightLAN_GUI::loadLanguage);
+      connect(this->mainWindow, &QObject::destroyed, this, &EightLAN_GUI::mainWindowClosed);
       this->mainWindow->show();
    }
 }
@@ -168,12 +168,12 @@ void D_LAN_GUI::showMainWindow()
 /**
   * Stop only the GUI.
   */
-void D_LAN_GUI::exitGUI()
+void EightLAN_GUI::exitGUI()
 {
    this->exit(false);
 }
 
-void D_LAN_GUI::exit(bool stopTheCore)
+void EightLAN_GUI::exit(bool stopTheCore)
 {
    this->trayIcon.hide();
 
@@ -182,7 +182,7 @@ void D_LAN_GUI::exit(bool stopTheCore)
 
    if (this->mainWindow)
    {
-      disconnect(this->mainWindow, &QObject::destroyed, this, &D_LAN_GUI::mainWindowClosed);
+      disconnect(this->mainWindow, &QObject::destroyed, this, &EightLAN_GUI::mainWindowClosed);
       delete this->mainWindow;
    }
 

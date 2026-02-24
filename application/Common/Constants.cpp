@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 using namespace Common;
 
 #ifdef Q_OS_WIN32
-   const QString Constants::APPLICATION_FOLDER_NAME("D-LAN");
+   const QString Constants::APPLICATION_FOLDER_NAME("8LAN");
 #else
-   const QString Constants::APPLICATION_FOLDER_NAME(".d-lan");
+   const QString Constants::APPLICATION_FOLDER_NAME(".8lan");
 #endif
 
 // Some files are saved as text format in debug and as binary in release.
@@ -43,7 +43,7 @@ const QString Constants::LANGUAGE_DIRECTORY("languages");
 const QString Constants::STYLE_DIRECTORY("styles");
 const QString Constants::STYLE_FILE_NAME("style.css");
 
-const QString Constants::SERVICE_NAME("D-LAN Core");
+const QString Constants::SERVICE_NAME("8LAN Core");
 
 const int Constants::PROTOBUF_STREAMING_BUFFER_SIZE(4 * 1024); ///< 4kB.
 

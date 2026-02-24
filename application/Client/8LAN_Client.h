@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
   */
   
-#ifndef CLIENT_D_LAN_CLIENT_H
-#define CLIENT_D_LAN_CLIENT_H
+#ifndef CLIENT_EIGHTLAN_CLIENT_H
+#define CLIENT_EIGHTLAN_CLIENT_H
 
 #include <QCoreApplication>
 #include <QJSEngine>
@@ -32,11 +32,11 @@
 
 namespace Client
 {
-   class D_LAN_Client : public QCoreApplication
+   class EightLAN_Client : public QCoreApplication
    {
       Q_OBJECT
    public:
-      D_LAN_Client(int argc, char* argv[]);
+      EightLAN_Client(int argc, char* argv[]);
 
    public slots:
       QJSValue newConnection();

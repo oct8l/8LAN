@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -107,13 +107,13 @@ namespace FM
          // A file or a directory is moved into the shared directory structure or a shared directory is moved somewhere else.
          // The file or the directory can be renamed.
          // Some examples on files:
-         //  - /home/dlan/shared/a/x.txt -> /home/dlan/shared/a/y.txt
-         //  - /home/dlan/shared/a/x.txt -> /home/dlan/shared/a/b/x.txt
-         //  - /home/dlan/shared/a/x.txt -> /home/dlan/shared2/a/b/y.txt
+         //  - /home/8lan/shared/a/x.txt -> /home/8lan/shared/a/y.txt
+         //  - /home/8lan/shared/a/x.txt -> /home/8lan/shared/a/b/x.txt
+         //  - /home/8lan/shared/a/x.txt -> /home/8lan/shared2/a/b/y.txt
          // Some examples on directories:
-         //  - /home/dlan/shared/a -> /home/dlan/shared/b
-         //  - /home/dlan/shared/a -> /home/dlan/shared/x/a
-         //  - /home/dlan/shared/a -> /home/dlan/shared2/a
+         //  - /home/8lan/shared/a -> /home/8lan/shared/b
+         //  - /home/8lan/shared/a -> /home/8lan/shared/x/a
+         //  - /home/8lan/shared/a -> /home/8lan/shared2/a
          // If a file is moved from outside a shared dir you may use 'NEW'
          // If a file is moved from a shared dir to outside you may use 'DELETED'
          MOVE,

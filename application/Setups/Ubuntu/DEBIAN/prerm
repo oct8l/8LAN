@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm /usr/bin/d-lan-core
-rm /usr/bin/d-lan-gui
+rm /usr/bin/8lan-core
+rm /usr/bin/8lan-gui

@@ -144,7 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          cp artifacts/linux/packages/d-lan-linux-portable.tar.gz "release-assets/8lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
+          cp artifacts/linux/packages/8lan-linux-portable.tar.gz "release-assets/8lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
 
       - name: Upload staged release assets
         uses: actions/upload-artifact@v6
@@ -245,7 +245,7 @@ jobs:
           WINDOWS_SIGNING_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERT_PASSWORD }}
           WINDOWS_SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_SIGNING_TIMESTAMP_URL }}
         run: |
-          $certPath = Join-Path $env:RUNNER_TEMP "d-lan-codesign.pfx"
+          $certPath = Join-Path $env:RUNNER_TEMP "8lan-codesign.pfx"
           $timestampUrl = $env:WINDOWS_SIGNING_TIMESTAMP_URL
           if ([string]::IsNullOrWhiteSpace($timestampUrl)) {
             $timestampUrl = "http://timestamp.digicert.com"
@@ -269,9 +269,9 @@ jobs:
               }
             }
 
-            & $signtool verify /pa "artifacts/windows/runtime/portable/D-LAN.GUI.exe"
+            & $signtool verify /pa "artifacts/windows/runtime/portable/8LAN.GUI.exe"
             if ($LASTEXITCODE -ne 0) {
-              throw "Signature verification failed for artifacts/windows/runtime/portable/D-LAN.GUI.exe"
+              throw "Signature verification failed for artifacts/windows/runtime/portable/8LAN.GUI.exe"
             }
           } finally {
             if (Test-Path $certPath) {
@@ -293,7 +293,7 @@ jobs:
           )
 
           portable_win_path="$(cygpath -w "$(pwd)/artifacts/windows/runtime/portable")"
-          archive_win_path="$(cygpath -w "$(pwd)/artifacts/windows/packages/d-lan-windows-portable.zip")"
+          archive_win_path="$(cygpath -w "$(pwd)/artifacts/windows/packages/8lan-windows-portable.zip")"
           powershell.exe -NoProfile -Command "Compress-Archive -Path '${portable_win_path}\\*' -DestinationPath '${archive_win_path}' -Force"
 
       - name: Smoke check artifacts
@@ -305,7 +305,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          cp artifacts/windows/packages/d-lan-windows-portable.zip "release-assets/8lan-windows-${{ matrix.qt }}-portable.zip"
+          cp artifacts/windows/packages/8lan-windows-portable.zip "release-assets/8lan-windows-${{ matrix.qt }}-portable.zip"
 
       - name: Upload staged release assets
         uses: actions/upload-artifact@v6

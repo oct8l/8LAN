@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ QList<Language> Languages::getAvailableLanguages(ExeType exeType)
    QList<Language> languages;
    QDir dir(this->path);
    const QRegularExpression reg(
-      QString("^d_lan_%1\\.(\\w+)\\.qm$").arg(exeType == ExeType::GUI ? "gui" : "core")
+      QString("^8lan_%1\\.(\\w+)\\.qm$").arg(exeType == ExeType::GUI ? "gui" : "core")
    );
    for (QStringListIterator i(dir.entryList(QStringList() << "*.qm", QDir::Files, QDir::Name)); i.hasNext();)
    {

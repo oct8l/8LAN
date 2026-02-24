@@ -33,8 +33,8 @@
     </message>
     <message>
         <location/>
-        <source>D-LAN</source>
-        <translation>D-LAN</translation>
+        <source>8LAN</source>
+        <translation>8LAN</translation>
     </message>
     <message>
         <location/>
@@ -48,12 +48,12 @@
     </message>
     <message>
         <location/>
-        <source>Copyright 2010-%1 Greg Burri. All rights reserved.</source>
-        <translation>Copyright 2010-%1 Greg Burri. Tous droits réservés.</translation>
+        <source>Copyright 2010-%1 Greg Burri and oct8l. All rights reserved.</source>
+        <translation>Copyright 2010-%1 Greg Burri et oct8l. Tous droits réservés.</translation>
     </message>
     <message>
-        <source>Copyright 2010-2011 Greg Burri. All rights reserved.</source>
-        <translation type="obsolete">Copyright 2010-2011 Greg Burri. Tous droits réservés.</translation>
+        <source>Copyright 2010-2011 Greg Burri and oct8l. All rights reserved.</source>
+        <translation type="obsolete">Copyright 2010-2011 Greg Burri et oct8l. Tous droits réservés.</translation>
     </message>
     <message>
         <location/>
@@ -70,9 +70,9 @@
     </message>
 </context>
 <context>
-    <name>GUI::D_LAN_GUI</name>
+    <name>GUI::EightLAN_GUI</name>
     <message>
-        <location filename="../GUI/D-LAN_GUI.cpp" line="+122"/>
+        <location filename="../GUI/8LAN_GUI.cpp" line="+122"/>
         <source>Show the GUI</source>
         <translation>Afficher le GUI</translation>
     </message>
@@ -726,8 +726,8 @@
     <name>MainWindow</name>
     <message>
         <location filename="../GUI/MainWindow.ui"/>
-        <source>D-LAN</source>
-        <translation>D-LAN</translation>
+        <source>8LAN</source>
+        <translation>8LAN</translation>
     </message>
     <message>
         <location/>
@@ -763,8 +763,8 @@
     <name>QObject</name>
     <message>
         <location filename="../Common/RemoteCoreController/priv/CoreController.cpp" line="+48"/>
-        <source>D-LAN Core cannot be installed as a service</source>
-        <translation>D-LAN ne peut pas être installé comme service</translation>
+        <source>8LAN Core cannot be installed as a service</source>
+        <translation>8LAN ne peut pas être installé comme service</translation>
     </message>
     <message>
         <location line="+14"/>
@@ -782,14 +782,14 @@
         <translation>Le dossier choisi sera partagé</translation>
     </message>
     <message>
-        <location filename="../GUI/D-LAN_GUI.cpp" line="-60"/>
-        <source>D-LAN already launched</source>
-        <translation>D-LAN déjà lancé</translation>
+        <location filename="../GUI/8LAN_GUI.cpp" line="-60"/>
+        <source>8LAN already launched</source>
+        <translation>8LAN déjà lancé</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>An instance of D-LAN is already launched</source>
-        <translation>Une instance de D-LAN est déjà lancé</translation>
+        <source>An instance of 8LAN is already launched</source>
+        <translation>Une instance de 8LAN est déjà lancé</translation>
     </message>
     <message>
         <location line="+2"/>

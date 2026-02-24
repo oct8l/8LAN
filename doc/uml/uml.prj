@@ -2,7 +2,7 @@ format 75
 "uml"
   revision 11
   modified_by 42 "gburri"
-  cpp_root_dir "C:/Users/gburri/Documents/aybabtu/application/"
+  cpp_root_dir "C:/Users/gburri/Documents/8lan/application/"
 
 
   
@@ -41,7 +41,7 @@ format 75
   
   ncouples 1
   key "html dir" value "C:/Users/gburri/AppData/Local/Temp/"
-  package_ref 128006 // Aybabtu
+  package_ref 128006 // 8LAN
 
   package_ref 130307 // Qt
 

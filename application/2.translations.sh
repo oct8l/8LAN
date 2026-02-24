@@ -14,8 +14,8 @@ cd $TS_DIR
 
 for Lang in $LANGS
 do
-   TS_FILES_GUI="$TS_FILES_GUI d_lan_gui.$Lang.ts"
-   TS_FILES_CORE="$TS_FILES_CORE d_lan_core.$Lang.ts"
+   TS_FILES_GUI="$TS_FILES_GUI 8lan_gui.$Lang.ts"
+   TS_FILES_CORE="$TS_FILES_CORE 8lan_core.$Lang.ts"
 done
 
 lupdate -no-ui-lines -codecfortr UTF-8 ../GUI ../Common/RemoteCoreController -ts $TS_FILES_GUI

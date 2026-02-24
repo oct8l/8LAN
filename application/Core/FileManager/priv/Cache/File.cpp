@@ -1,6 +1,6 @@
 /**
-  * D-LAN - A decentralized LAN file sharing software.
-  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>
+  * 8LAN - A decentralized LAN file sharing software.
+  * Copyright (C) 2010-2012 Greg Burri <greg.burri@gmail.com>, oct8l
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@ void File::newDataWriterCreated()
       }
 
       if (fileReset)
-         throw FileResetException(); // A file has been deleted and we know some data. For example a user has shut down D-LAN then has removed a previously downloading ".unfinished" file then he has restarted D-LAN.
+         throw FileResetException(); // A file has been deleted and we know some data. For example a user has shut down 8LAN then has removed a previously downloading ".unfinished" file then he has restarted 8LAN.
    }
 }
 

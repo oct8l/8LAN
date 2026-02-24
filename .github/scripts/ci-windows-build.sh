@@ -248,7 +248,7 @@ generate_translations() {
   echo "Compiling translations"
   pushd "${APP_DIR}/translations" >/dev/null
   rm -f ./*.qm
-  "${LRELEASE_BIN}" d_lan_core.*.ts d_lan_gui.*.ts
+  "${LRELEASE_BIN}" 8lan_core.*.ts 8lan_gui.*.ts
   popd >/dev/null
 }
 
@@ -302,26 +302,26 @@ collect_artifacts() {
   mkdir -p "${portable_dir}/languages"
   mkdir -p "${portable_dir}/Emoticons"
 
-  cp "${APP_DIR}/Core/output/release/D-LAN.Core.exe" "${release_dir}/"
-  cp "${APP_DIR}/GUI/output/release/D-LAN.GUI.exe" "${release_dir}/"
-  cp "${APP_DIR}/Client/output/release/D-LAN.Client.exe" "${release_dir}/"
+  cp "${APP_DIR}/Core/output/release/8LAN.Core.exe" "${release_dir}/"
+  cp "${APP_DIR}/GUI/output/release/8LAN.GUI.exe" "${release_dir}/"
+  cp "${APP_DIR}/Client/output/release/8LAN.Client.exe" "${release_dir}/"
   release_bins=(
-    "${release_dir}/D-LAN.Core.exe"
-    "${release_dir}/D-LAN.GUI.exe"
-    "${release_dir}/D-LAN.Client.exe"
+    "${release_dir}/8LAN.Core.exe"
+    "${release_dir}/8LAN.GUI.exe"
+    "${release_dir}/8LAN.Client.exe"
   )
 
-  if [[ -f "${APP_DIR}/Core/output/debug/D-LAN.Core.exe" ]]; then
-    cp "${APP_DIR}/Core/output/debug/D-LAN.Core.exe" "${debug_dir}/"
-    debug_bins+=("${debug_dir}/D-LAN.Core.exe")
+  if [[ -f "${APP_DIR}/Core/output/debug/8LAN.Core.exe" ]]; then
+    cp "${APP_DIR}/Core/output/debug/8LAN.Core.exe" "${debug_dir}/"
+    debug_bins+=("${debug_dir}/8LAN.Core.exe")
   fi
-  if [[ -f "${APP_DIR}/GUI/output/debug/D-LAN.GUI.exe" ]]; then
-    cp "${APP_DIR}/GUI/output/debug/D-LAN.GUI.exe" "${debug_dir}/"
-    debug_bins+=("${debug_dir}/D-LAN.GUI.exe")
+  if [[ -f "${APP_DIR}/GUI/output/debug/8LAN.GUI.exe" ]]; then
+    cp "${APP_DIR}/GUI/output/debug/8LAN.GUI.exe" "${debug_dir}/"
+    debug_bins+=("${debug_dir}/8LAN.GUI.exe")
   fi
-  if [[ -f "${APP_DIR}/Client/output/debug/D-LAN.Client.exe" ]]; then
-    cp "${APP_DIR}/Client/output/debug/D-LAN.Client.exe" "${debug_dir}/"
-    debug_bins+=("${debug_dir}/D-LAN.Client.exe")
+  if [[ -f "${APP_DIR}/Client/output/debug/8LAN.Client.exe" ]]; then
+    cp "${APP_DIR}/Client/output/debug/8LAN.Client.exe" "${debug_dir}/"
+    debug_bins+=("${debug_dir}/8LAN.Client.exe")
   fi
 
   cp "${release_bins[@]}" "${portable_dir}/"
@@ -340,9 +340,9 @@ collect_artifacts() {
     # --no-angle is Qt5-only; Qt6's windeployqt does not support it.
     local windeployqt_extra=()
     [[ "${QT_MAJOR}" != "6" ]] && windeployqt_extra+=(--no-angle)
-    if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime "${windeployqt_extra[@]}" --no-translations "${portable_dir}/D-LAN.GUI.exe"; then
+    if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime "${windeployqt_extra[@]}" --no-translations "${portable_dir}/8LAN.GUI.exe"; then
       echo "windeployqt failed; retrying without extra flags"
-      if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime --no-translations "${portable_dir}/D-LAN.GUI.exe"; then
+      if ! "${WINDEPLOYQT_BIN}" --release --compiler-runtime --no-translations "${portable_dir}/8LAN.GUI.exe"; then
         echo "windeployqt failed; continuing without full Qt runtime auto-deployment"
       fi
     fi
@@ -352,7 +352,7 @@ collect_artifacts() {
 
   # Ensure each launch directory has all MinGW runtime DLL dependencies.
   copy_mingw_runtime_deps "${release_dir}" "${release_bins[@]}"
-  copy_mingw_runtime_deps "${portable_dir}" "${portable_dir}/D-LAN.Core.exe" "${portable_dir}/D-LAN.GUI.exe" "${portable_dir}/D-LAN.Client.exe"
+  copy_mingw_runtime_deps "${portable_dir}" "${portable_dir}/8LAN.Core.exe" "${portable_dir}/8LAN.GUI.exe" "${portable_dir}/8LAN.Client.exe"
   if ((${#debug_bins[@]} > 0)); then
     copy_mingw_runtime_deps "${debug_dir}" "${debug_bins[@]}"
   fi
@@ -368,7 +368,7 @@ collect_artifacts() {
 package_artifacts() {
   local packages_dir="${ARTIFACTS_DIR}/packages"
   local portable_dir="${ARTIFACTS_DIR}/runtime/portable"
-  local archive_path="${packages_dir}/d-lan-windows-portable.zip"
+  local archive_path="${packages_dir}/8lan-windows-portable.zip"
   local portable_win_path
   local archive_win_path
 

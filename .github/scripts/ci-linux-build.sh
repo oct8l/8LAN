@@ -223,7 +223,7 @@ generate_translations() {
   echo "Compiling translations"
   pushd "${APP_DIR}/translations" >/dev/null
   rm -f ./*.qm
-  "${LRELEASE_BIN}" d_lan_core.*.ts d_lan_gui.*.ts
+  "${LRELEASE_BIN}" 8lan_core.*.ts 8lan_gui.*.ts
   popd >/dev/null
 }
 
@@ -236,18 +236,18 @@ collect_artifacts() {
   mkdir -p "${ARTIFACTS_DIR}/runtime/languages"
   mkdir -p "${ARTIFACTS_DIR}/runtime/Emoticons"
 
-  cp "${APP_DIR}/Core/output/release/D-LAN.Core" "${ARTIFACTS_DIR}/runtime/bin/release/"
-  cp "${APP_DIR}/GUI/output/release/D-LAN.GUI" "${ARTIFACTS_DIR}/runtime/bin/release/"
-  cp "${APP_DIR}/Client/output/release/D-LAN.Client" "${ARTIFACTS_DIR}/runtime/bin/release/"
+  cp "${APP_DIR}/Core/output/release/8LAN.Core" "${ARTIFACTS_DIR}/runtime/bin/release/"
+  cp "${APP_DIR}/GUI/output/release/8LAN.GUI" "${ARTIFACTS_DIR}/runtime/bin/release/"
+  cp "${APP_DIR}/Client/output/release/8LAN.Client" "${ARTIFACTS_DIR}/runtime/bin/release/"
 
-  if [[ -f "${APP_DIR}/Core/output/debug/D-LAN.Core" ]]; then
-    cp "${APP_DIR}/Core/output/debug/D-LAN.Core" "${ARTIFACTS_DIR}/runtime/bin/debug/"
+  if [[ -f "${APP_DIR}/Core/output/debug/8LAN.Core" ]]; then
+    cp "${APP_DIR}/Core/output/debug/8LAN.Core" "${ARTIFACTS_DIR}/runtime/bin/debug/"
   fi
-  if [[ -f "${APP_DIR}/GUI/output/debug/D-LAN.GUI" ]]; then
-    cp "${APP_DIR}/GUI/output/debug/D-LAN.GUI" "${ARTIFACTS_DIR}/runtime/bin/debug/"
+  if [[ -f "${APP_DIR}/GUI/output/debug/8LAN.GUI" ]]; then
+    cp "${APP_DIR}/GUI/output/debug/8LAN.GUI" "${ARTIFACTS_DIR}/runtime/bin/debug/"
   fi
-  if [[ -f "${APP_DIR}/Client/output/debug/D-LAN.Client" ]]; then
-    cp "${APP_DIR}/Client/output/debug/D-LAN.Client" "${ARTIFACTS_DIR}/runtime/bin/debug/"
+  if [[ -f "${APP_DIR}/Client/output/debug/8LAN.Client" ]]; then
+    cp "${APP_DIR}/Client/output/debug/8LAN.Client" "${ARTIFACTS_DIR}/runtime/bin/debug/"
   fi
 
   cp -R "${APP_DIR}/styles" "${ARTIFACTS_DIR}/runtime/"
@@ -271,7 +271,7 @@ collect_artifacts() {
 
 package_artifacts() {
   local packages_dir="${ARTIFACTS_DIR}/packages"
-  local archive_path="${packages_dir}/d-lan-linux-portable.tar.gz"
+  local archive_path="${packages_dir}/8lan-linux-portable.tar.gz"
 
   echo "Packaging Linux installable artifacts"
   rm -rf "${packages_dir}"

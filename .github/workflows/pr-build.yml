@@ -86,16 +86,16 @@ jobs:
           }
 
           mkdir -p pr-artifacts
-          copy_optional artifacts/linux/packages/d-lan-linux-portable.tar.gz "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
-          copy_optional artifacts/linux/packages/PACKAGES.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-PACKAGES.txt"
-          copy_optional artifacts/linux/SHA256SUMS "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SHA256SUMS.txt"
-          copy_optional artifacts/linux/BUILD_STATUS.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-BUILD_STATUS.txt"
-          copy_optional artifacts/linux/SMOKE_STATUS.txt "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-SMOKE_STATUS.txt"
-          copy_optional artifacts/linux/logs/build.log "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-build.log"
-          copy_optional artifacts/linux/logs/smoke.log "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-smoke.log"
+          copy_optional artifacts/linux/packages/8lan-linux-portable.tar.gz "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-portable.tar.gz"
+          copy_optional artifacts/linux/packages/PACKAGES.txt "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-PACKAGES.txt"
+          copy_optional artifacts/linux/SHA256SUMS "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-SHA256SUMS.txt"
+          copy_optional artifacts/linux/BUILD_STATUS.txt "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-BUILD_STATUS.txt"
+          copy_optional artifacts/linux/SMOKE_STATUS.txt "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          copy_optional artifacts/linux/logs/build.log "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-build.log"
+          copy_optional artifacts/linux/logs/smoke.log "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-smoke.log"
 
           if ! compgen -G "pr-artifacts/*" >/dev/null; then
-            echo "No artifacts were produced by this job." > "pr-artifacts/d-lan-${{ matrix.platform }}-${{ matrix.qt }}-NO_ARTIFACTS.txt"
+            echo "No artifacts were produced by this job." > "pr-artifacts/8lan-${{ matrix.platform }}-${{ matrix.qt }}-NO_ARTIFACTS.txt"
           fi
 
       - name: Upload PR artifacts
@@ -192,16 +192,16 @@ jobs:
           }
 
           mkdir -p pr-artifacts
-          copy_optional artifacts/windows/packages/d-lan-windows-portable.zip "pr-artifacts/d-lan-windows-${{ matrix.qt }}-portable.zip"
-          copy_optional artifacts/windows/packages/PACKAGES.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-PACKAGES.txt"
-          copy_optional artifacts/windows/SHA256SUMS "pr-artifacts/d-lan-windows-${{ matrix.qt }}-SHA256SUMS.txt"
-          copy_optional artifacts/windows/BUILD_STATUS.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-BUILD_STATUS.txt"
-          copy_optional artifacts/windows/SMOKE_STATUS.txt "pr-artifacts/d-lan-windows-${{ matrix.qt }}-SMOKE_STATUS.txt"
-          copy_optional artifacts/windows/logs/build.log "pr-artifacts/d-lan-windows-${{ matrix.qt }}-build.log"
-          copy_optional artifacts/windows/logs/smoke.log "pr-artifacts/d-lan-windows-${{ matrix.qt }}-smoke.log"
+          copy_optional artifacts/windows/packages/8lan-windows-portable.zip "pr-artifacts/8lan-windows-${{ matrix.qt }}-portable.zip"
+          copy_optional artifacts/windows/packages/PACKAGES.txt "pr-artifacts/8lan-windows-${{ matrix.qt }}-PACKAGES.txt"
+          copy_optional artifacts/windows/SHA256SUMS "pr-artifacts/8lan-windows-${{ matrix.qt }}-SHA256SUMS.txt"
+          copy_optional artifacts/windows/BUILD_STATUS.txt "pr-artifacts/8lan-windows-${{ matrix.qt }}-BUILD_STATUS.txt"
+          copy_optional artifacts/windows/SMOKE_STATUS.txt "pr-artifacts/8lan-windows-${{ matrix.qt }}-SMOKE_STATUS.txt"
+          copy_optional artifacts/windows/logs/build.log "pr-artifacts/8lan-windows-${{ matrix.qt }}-build.log"
+          copy_optional artifacts/windows/logs/smoke.log "pr-artifacts/8lan-windows-${{ matrix.qt }}-smoke.log"
 
           if ! compgen -G "pr-artifacts/*" >/dev/null; then
-            echo "No artifacts were produced by this job." > "pr-artifacts/d-lan-windows-${{ matrix.qt }}-NO_ARTIFACTS.txt"
+            echo "No artifacts were produced by this job." > "pr-artifacts/8lan-windows-${{ matrix.qt }}-NO_ARTIFACTS.txt"
           fi
 
       - name: Upload PR artifacts

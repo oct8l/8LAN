@@ -10,7 +10,7 @@
 QT       += core gui network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 win32:greaterThan(QT_MAJOR_VERSION, 4):lessThan(QT_MAJOR_VERSION, 6): QT += winextras
-TARGET = "D-LAN.GUI"
+TARGET = "8LAN.GUI"
 TEMPLATE = app
 
 RC_FILE = ../Common/version.rc
@@ -73,7 +73,7 @@ SOURCES += main.cpp\
     Settings/DirListModel.cpp \
     Settings/RemoteFileDialog.cpp \
     DownloadMenu.cpp \
-    D-LAN_GUI.cpp \
+    8LAN_GUI.cpp \
     ProgressBar.cpp \
     IconProvider.cpp \
     Utils.cpp \
@@ -112,7 +112,7 @@ HEADERS  += MainWindow.h \
     Settings/DirListModel.h \
     Settings/RemoteFileDialog.h \
     DownloadMenu.h \
-    D-LAN_GUI.h \
+    8LAN_GUI.h \
     ProgressBar.h \
     IconProvider.h \
     Utils.h \

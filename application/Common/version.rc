@@ -11,15 +11,15 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName",      "Ek Dev"
-            VALUE "FileDescription",  "D-LAN - A distributed LAN file sharing software"
+            VALUE "CompanyName",      "Greg Burri, oct8l"
+            VALUE "FileDescription",  "8LAN - A distributed LAN file sharing software"
             VALUE "FileVersion",      VERSION
-            VALUE "InternalName",     "D-LAN"
-            VALUE "LegalCopyright",   "2010-2011"
+            VALUE "InternalName",     "8LAN"
+            VALUE "LegalCopyright",   "Copyright (C) 2010-2026 Greg Burri and oct8l"
             VALUE "LegalTrademarks1", ""
             VALUE "LegalTrademarks2", ""
             VALUE "OriginalFilename", ""
-            VALUE "ProductName",      "D-LAN"
+            VALUE "ProductName",      "8LAN"
             VALUE "ProductVersion",   VERSION
             VALUE "VersionTag",       VERSION_TAG
             VALUE "BuildTime",        BUILD_TIME
